@@ -305,24 +305,29 @@ def main():
     face_feature_extractor = Feature()
     print(f"Models loaded in {time.time() - start:.2f} seconds.\n")
 
-    img_path = "test_img/face3.jpg"
-    print(f"Processing image: {img_path}")
-    img = cv2.imread(img_path)
-    start = time.time()
-    det_ress = det.detect(img)
-    for res in det_ress:
-        cls = res['cls']
-        land_marks = res['landmarks']
-        if cls==0:
-            print("Detected a car plate.")
-            rec_result = car_rec.rec(img, land_marks)
-            print(f"Recognition result: {rec_result}")
-            print(f"Processed {img_path} in {time.time() - start:.2f} seconds.\n")
-        elif cls==1:
-            print("Detected a face.")
-            feature_vector = face_feature_extractor.feature(img, land_marks)
-            print(f"Feature vector: [{feature_vector[0,0]:.4f}, {feature_vector[0,1]:.4f}, {feature_vector[0,2]:.4f}, ... {feature_vector[0,-1]:.4f}]")
-            print(f"Processed {img_path} in {time.time() - start:.2f} seconds.\n")
+    test_img_dir = "test_img"
+    img_files = os.listdir(test_img_dir)
+    for img_file in img_files:
+        img_path = os.path.join(test_img_dir, img_file)
+        print(f"Processing image: {img_path}")
+        img = cv2.imread(img_path)
+        if img is None:
+            print(f"Failed to load image: {img_path}\n")
+            continue
+        start = time.time()
+        det_ress = det.detect(img)
+        for res in det_ress:
+            cls = res['cls']
+            land_marks = res['landmarks']
+            if cls == 0:
+                print("Detected a car plate.")
+                rec_result = car_rec.rec(img, land_marks)
+                print(f"Recognition result: {rec_result}")
+            elif cls == 1:
+                print("Detected a face.")
+                feature_vector = face_feature_extractor.feature(img, land_marks)
+                print(f"Feature vector: [{feature_vector[0,0]:.4f}, {feature_vector[0,1]:.4f}, {feature_vector[0,2]:.4f}, ... {feature_vector[0,-1]:.4f}]")
+        print(f"Processed {img_path} in {time.time() - start:.2f} seconds.\n")
     print()
 
 if __name__ == "__main__":
