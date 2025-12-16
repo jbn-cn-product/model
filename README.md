@@ -137,7 +137,7 @@ dependencies {
 模型文件路径(Linux格式): smb://192.168.2.28/产研中心/算法/faceplate/model-onnx/
 
 ```text
-app/src/main/assets
+app/src/main
 ├── AndroidManifest.xml
 └── assets
     ├── car_face_det.onnx
