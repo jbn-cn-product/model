@@ -2,12 +2,10 @@ package com.example.model;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.util.Log;
 import com.example.model.base.OnnxDeployer;
 import com.example.model.util.ModelImageHelper;
 import ai.onnxruntime.*;
 import java.nio.FloatBuffer;
-import java.util.Arrays;
 
 public class FaceRecognizer extends OnnxDeployer<FaceRecognizer.Result> {
 
@@ -31,12 +29,9 @@ public class FaceRecognizer extends OnnxDeployer<FaceRecognizer.Result> {
     }
 
     // 运行
-    public Result inference(Bitmap originalBitmap) {
+    public float[] run(Bitmap originalBitmap) {
         Result result = super.inference(originalBitmap);
-        if (result != null) { // 人脸模型太大，可能无法载入
-            Log.i(TAG, "face recognized: " + Arrays.toString(result.features));
-        }
-        return result;
+        return result.features;
     }
 
     // 预处理

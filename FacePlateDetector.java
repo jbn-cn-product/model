@@ -46,7 +46,7 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
     }
 
     // 运行
-    public List<Result> inference(Bitmap originalBitmap) {
+    public List<Result> run(Bitmap originalBitmap) {
         this.previewWidth = originalBitmap.getWidth();
         this.previewHeight = originalBitmap.getHeight();
         long startTime = System.currentTimeMillis();

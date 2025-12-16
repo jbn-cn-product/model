@@ -37,7 +37,7 @@ public class PlateRecognizer extends OnnxDeployer<PlateRecognizer.Result> {
     }
 
     // 运行
-    public String inference(Bitmap originalBitmap, int[] bbox) {
+    public String run(Bitmap originalBitmap, int[] bbox) {
         this.bbox = bbox;
         Result result = super.inference(originalBitmap);
         String number = result.number;
