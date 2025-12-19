@@ -103,7 +103,7 @@ classDiagram
 
 ```sh
 cd project/app/src/main/java/com/example # 放在应用包的同级目录下，以便不同项目的package语句保持一致
-git submodule add git@gitee.com:Jjiabainong/algo-faceplate-onnx.git model
+git submodule add git@github.com:jbn-cn-product/model-deployment-onnx.git model
 cd model
 git checkout android
 ```
@@ -173,5 +173,6 @@ public class Recognizer implements AutoCloseable {
 
 ## 三、注意事项
 
-模型推理时间较长，要在独立的线程中运行run方法，避免阻塞主线程
-输入的Bitmap图像要求为RGB格式
+- 模型推理时间较长，要在独立的线程中运行run方法，避免阻塞主线程
+- 输入的Bitmap图像要求为RGB格式
+- 参数列表中以"originalBitmap"命名的Bitmap对象表明这个资源应当在推理完成后才回收
