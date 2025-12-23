@@ -20,6 +20,9 @@ public abstract class OnnxDeployer<T> implements AutoCloseable {
 
     private static final String TAG = "MyLogcat-OnnxDeployer";
 
+    // 同步锁，避免推理时调用close
+    private final Object lock = new Object();
+
     // 模型环境
     private final OrtEnvironment env;
     protected OrtSession session;
@@ -65,12 +68,14 @@ public abstract class OnnxDeployer<T> implements AutoCloseable {
     // 释放资源
     @Override
     public void close() {
-        try {
-            session.close();
-        } catch (OrtException e) {
-            Log.e(TAG, "Failed to close ONNX session", e);
+        synchronized (lock) {
+            try {
+                session.close();
+            } catch (OrtException e) {
+                Log.e(TAG, "Failed to close ONNX session", e);
+            }
+            env.close();
         }
-        env.close();
     }
 
     // 运行模型
@@ -82,15 +87,17 @@ public abstract class OnnxDeployer<T> implements AutoCloseable {
 
     // 运行
     protected T inference(Bitmap originalBitmap) {
-        float[] inputData = preprocess(originalBitmap);
-        // 更新输入缓冲区数据
-        inputByteBuffer.rewind();
-        inputFloatBuffer.rewind();
-        inputFloatBuffer.put(inputData);
-        try (OrtSession.Result result = runSession()) {
-            return postprocess(result);
-        } catch (OrtException e) {
-            throw new RuntimeException(e);
+        synchronized (lock) {
+            float[] inputData = preprocess(originalBitmap);
+            // 更新输入缓冲区数据
+            inputByteBuffer.rewind();
+            inputFloatBuffer.rewind();
+            inputFloatBuffer.put(inputData);
+            try (OrtSession.Result result = runSession()) {
+                return postprocess(result);
+            } catch (OrtException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
