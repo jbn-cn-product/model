@@ -51,7 +51,9 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
         this.previewHeight = originalBitmap.getHeight();
         long startTime = System.currentTimeMillis();
         List<Result> results = super.inference(originalBitmap);
-        Log.d(TAG, String.format("run detection in %d ms, %d objects", System.currentTimeMillis() - startTime, results.size()));
+        if (!results.isEmpty()) {
+            Log.d(TAG, String.format("run detection in %d ms, %d objects", System.currentTimeMillis() - startTime, results.size()));
+        }
         return results;
     }
 
