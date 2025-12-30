@@ -19,8 +19,8 @@ public class FaceRecognizer extends OnnxDeployer<FaceRecognizer.Result> {
     private static final String MODEL_NAME = "face_rec.onnx";
 
     // 模型参数
-    private static final int INPUT_WIDTH = 112;
-    private static final int INPUT_HEIGHT = 112;
+    public static final int INPUT_WIDTH = 112;
+    public static final int INPUT_HEIGHT = 112;
     private static final float MEAN_VALUE = 0.5f; // 均值
     private static final float STD_VALUE = 0.5f;  // 标准差
 
