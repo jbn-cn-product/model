@@ -1,10 +1,10 @@
 package com.example.model;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
-import android.util.Log;
+import com.example.model.api.Logger;
+import com.example.model.api.ModelLoader;
 import com.example.model.base.OnnxDeployer;
 import com.example.model.util.ModelImageHelper;
 import java.nio.FloatBuffer;
@@ -41,8 +41,8 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
     private int previewWidth;
     private int previewHeight;
 
-    public FacePlateDetector(Context context) {
-        super(context, MODEL_NAME, INPUT_WIDTH, INPUT_HEIGHT);
+    public FacePlateDetector(ModelLoader modelLoader, Logger logger) {
+        super(modelLoader, logger, MODEL_NAME, INPUT_WIDTH, INPUT_HEIGHT);
     }
 
     // 运行
@@ -52,7 +52,7 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
         long startTime = System.currentTimeMillis();
         List<Result> results = super.inference(originalBitmap);
         if (!results.isEmpty()) {
-            Log.d(TAG, String.format("run detection in %d ms, %d objects", System.currentTimeMillis() - startTime, results.size()));
+            logger.debug(TAG, String.format("run detection in %d ms, %d objects", System.currentTimeMillis() - startTime, results.size()));
         }
         return results;
     }
@@ -90,7 +90,7 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
             buffer = tensor.getFloatBuffer();
             outputShape = tensorInfo.getShape();
         } catch (OrtException e) {
-            Log.e(TAG, "update output tensor failed");
+            logger.error(TAG, "update output tensor failed");
             return Collections.emptyList();
         }
         float[] outputArray = new float[buffer.remaining()];

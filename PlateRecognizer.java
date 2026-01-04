@@ -1,8 +1,8 @@
 package com.example.model;
 
-import android.content.Context;
 import android.graphics.Bitmap;
-import android.util.Log;
+import com.example.model.api.Logger;
+import com.example.model.api.ModelLoader;
 import com.example.model.base.OnnxDeployer;
 import com.example.model.util.ModelImageHelper;
 import ai.onnxruntime.*;
@@ -32,8 +32,8 @@ public class PlateRecognizer extends OnnxDeployer<PlateRecognizer.Result> {
     // 检测框，用于预处理时裁剪图像
     private int[] bbox;
 
-    public PlateRecognizer(Context context) {
-        super(context, MODEL_NAME, INPUT_WIDTH, INPUT_HEIGHT);
+    public PlateRecognizer(ModelLoader modelLoader, Logger logger) {
+        super(modelLoader, logger, MODEL_NAME, INPUT_WIDTH, INPUT_HEIGHT);
     }
 
     // 运行
@@ -41,7 +41,7 @@ public class PlateRecognizer extends OnnxDeployer<PlateRecognizer.Result> {
         this.bbox = bbox;
         Result result = super.inference(originalBitmap);
         String number = result.number;
-        Log.i(TAG, "plate number recognized: " + number);
+        logger.info(TAG, "plate number recognized: " + number);
         return number;
     }
 
@@ -69,7 +69,7 @@ public class PlateRecognizer extends OnnxDeployer<PlateRecognizer.Result> {
             result.color = decodeColor(((float[][]) colorTensor.getValue())[0]);
             return result;
         } catch (OrtException e) {
-            Log.e(TAG, "update output tensor failed");
+            logger.error(TAG, "update output tensor failed");
             return null;
         }
     }

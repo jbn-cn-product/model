@@ -1,11 +1,9 @@
 package com.example.model.base;
 
-import android.content.Context;
 import android.graphics.Bitmap;
-import android.util.Log;
-import java.io.BufferedInputStream;
+import com.example.model.api.Logger;
+import com.example.model.api.ModelLoader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -36,7 +34,11 @@ public abstract class OnnxDeployer<T> implements AutoCloseable {
     protected abstract float[] preprocess(Bitmap originalBitmap);
     protected abstract T postprocess(OrtSession.Result sessionResult);
 
-    protected OnnxDeployer(Context context, String modelName, int inputWidth, int inputHeight) {
+    // 接口
+    protected Logger logger;
+
+    protected OnnxDeployer(ModelLoader modelLoader, Logger logger, String modelName, int inputWidth, int inputHeight) {
+        this.logger = logger;
         // 申请native内存
         int inputSize = 1 * 3 * inputHeight * inputWidth;
         inputByteBuffer = ByteBuffer.allocateDirect(inputSize * 4);
@@ -47,13 +49,11 @@ public abstract class OnnxDeployer<T> implements AutoCloseable {
         env = OrtEnvironment.getEnvironment();
         OrtSession.SessionOptions sessionOptions = createSessionOptions();
         // 创建模型会话，打开模型文件，建立字节流
-        try (InputStream is = context.getAssets().open(modelName);
-             BufferedInputStream bis = new BufferedInputStream(is)) {
-            byte[] modelData = new byte[is.available()];
-            bis.read(modelData);
+        try {
+            byte[] modelData = modelLoader.getModelData(modelName);
             session = env.createSession(modelData, sessionOptions);
         } catch (IOException | OrtException e) {
-            Log.e(TAG, "Failed to initialize ONNX Runtime: ", e);
+            logger.error(TAG, "Failed to initialize ONNX Runtime: " + e);
             throw new RuntimeException();
         }
     }
@@ -72,7 +72,7 @@ public abstract class OnnxDeployer<T> implements AutoCloseable {
             try {
                 session.close();
             } catch (OrtException e) {
-                Log.e(TAG, "Failed to close ONNX session", e);
+                logger.error(TAG, "Failed to close ONNX session" + e);
             }
             env.close();
         }

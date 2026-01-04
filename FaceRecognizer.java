@@ -1,7 +1,8 @@
 package com.example.model;
 
-import android.content.Context;
 import android.graphics.Bitmap;
+import com.example.model.api.Logger;
+import com.example.model.api.ModelLoader;
 import com.example.model.base.OnnxDeployer;
 import com.example.model.util.ModelImageHelper;
 import ai.onnxruntime.*;
@@ -24,8 +25,8 @@ public class FaceRecognizer extends OnnxDeployer<FaceRecognizer.Result> {
     private static final float MEAN_VALUE = 0.5f; // 均值
     private static final float STD_VALUE = 0.5f;  // 标准差
 
-    public FaceRecognizer(Context context) {
-        super(context, MODEL_NAME, INPUT_WIDTH, INPUT_HEIGHT);
+    public FaceRecognizer(ModelLoader modelLoader, Logger logger) {
+        super(modelLoader, logger, MODEL_NAME, INPUT_WIDTH, INPUT_HEIGHT);
     }
 
     // 运行
