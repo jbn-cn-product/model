@@ -1,6 +1,5 @@
 package com.example.model;
 
-import com.example.model.api.Logger;
 import com.example.model.api.ModelLoader;
 import com.example.model.base.OnnxDeployer;
 import java.nio.FloatBuffer;

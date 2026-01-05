@@ -1,6 +1,5 @@
 package com.example.model.base;
 
-import com.example.model.api.Logger;
 import com.example.model.api.ModelLoader;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -14,6 +13,12 @@ import ai.onnxruntime.OrtException;
 import ai.onnxruntime.OrtSession;
 
 public abstract class OnnxDeployer<ResultType> implements AutoCloseable {
+
+    public interface Logger {
+        void debug(String TAG, String text);
+        void info(String TAG, String text);
+        void error(String TAG, String text);
+    }
 
     private static final String TAG = "MyLogcat-OnnxDeployer";
 
