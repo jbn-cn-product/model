@@ -1,6 +1,6 @@
-package com.example.model;
+package com.example.model.core;
 
-import com.example.model.base.OnnxDeployer;
+import com.example.model.core.base.OnnxDeployer;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,8 +38,8 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
     private int inputWidth;
     private int inputHeight;
 
-    public FacePlateDetector(byte[] modelData, Logger logger) {
-        super(modelData, logger, MODEL_WIDTH, MODEL_HEIGHT, MEAN_VALUE, STD_VALUE);
+    public FacePlateDetector(Logger logger, byte[] modelData) {
+        super(logger, modelData, MODEL_WIDTH, MODEL_HEIGHT, MEAN_VALUE, STD_VALUE);
     }
 
     // 运行

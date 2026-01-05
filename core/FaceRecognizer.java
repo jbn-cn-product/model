@@ -1,6 +1,6 @@
-package com.example.model;
+package com.example.model.core;
 
-import com.example.model.base.OnnxDeployer;
+import com.example.model.core.base.OnnxDeployer;
 import ai.onnxruntime.*;
 import java.nio.FloatBuffer;
 
@@ -18,8 +18,8 @@ public class FaceRecognizer extends OnnxDeployer<FaceRecognizer.Result> {
     private static final float MEAN_VALUE = 0.5f;
     private static final float STD_VALUE = 0.5f;
 
-    public FaceRecognizer(byte[] modelData, Logger logger) {
-        super(modelData, logger, MODEL_WIDTH, MODEL_HEIGHT, MEAN_VALUE, STD_VALUE);
+    public FaceRecognizer(Logger logger, byte[] modelData) {
+        super(logger, modelData,  MODEL_WIDTH, MODEL_HEIGHT, MEAN_VALUE, STD_VALUE);
     }
 
     // 运行

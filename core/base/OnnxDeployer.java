@@ -1,4 +1,4 @@
-package com.example.model.base;
+package com.example.model.core.base;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -38,13 +38,13 @@ public abstract class OnnxDeployer<ResultType> implements AutoCloseable {
     private final float meanValue;
     private final float stdValue;
 
-    // 需要实现的方法
-    protected abstract ResultType postprocess(OrtSession.Result sessionResult);
-
     // 接口
     protected Logger logger;
 
-    protected OnnxDeployer(byte[] modelData, Logger logger, int modelWidth, int modelHeight, float meanValue, float stdValue) {
+    // 需要实现的方法
+    protected abstract ResultType postprocess(OrtSession.Result sessionResult);
+
+    protected OnnxDeployer(Logger logger, byte[] modelData, int modelWidth, int modelHeight, float meanValue, float stdValue) {
         this.logger = logger;
         this.modelWidth = modelWidth;
         this.modelHeight = modelHeight;
@@ -59,7 +59,6 @@ public abstract class OnnxDeployer<ResultType> implements AutoCloseable {
         // 创建模型环境
         env = OrtEnvironment.getEnvironment();
         OrtSession.SessionOptions sessionOptions = createSessionOptions();
-        // 创建模型会话，打开模型文件，建立字节流
         try {
             session = env.createSession(modelData, sessionOptions);
         } catch (OrtException e) {
