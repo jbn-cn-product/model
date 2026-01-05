@@ -1,6 +1,5 @@
 package com.example.model.base;
 
-import android.graphics.Bitmap;
 import com.example.model.api.Logger;
 import com.example.model.api.ModelLoader;
 import java.io.IOException;
@@ -14,7 +13,7 @@ import ai.onnxruntime.OrtEnvironment;
 import ai.onnxruntime.OrtException;
 import ai.onnxruntime.OrtSession;
 
-public abstract class OnnxDeployer<T> implements AutoCloseable {
+public abstract class OnnxDeployer<ResultType> implements AutoCloseable {
 
     private static final String TAG = "MyLogcat-OnnxDeployer";
 
@@ -30,21 +29,30 @@ public abstract class OnnxDeployer<T> implements AutoCloseable {
     private final ByteBuffer inputByteBuffer;
     private final FloatBuffer inputFloatBuffer;
 
-    // 需要子类实现的方法
-    protected abstract float[] preprocess(Bitmap originalBitmap);
-    protected abstract T postprocess(OrtSession.Result sessionResult);
+    // 需要传入的参数
+    private final int modelWidth;
+    private final int modelHeight;
+    private final float meanValue;
+    private final float stdValue;
+
+    // 需要实现的方法
+    protected abstract ResultType postprocess(OrtSession.Result sessionResult);
 
     // 接口
     protected Logger logger;
 
-    protected OnnxDeployer(ModelLoader modelLoader, Logger logger, String modelName, int inputWidth, int inputHeight) {
+    protected OnnxDeployer(ModelLoader modelLoader, Logger logger, String modelName, int modelWidth, int modelHeight, float meanValue, float stdValue) {
         this.logger = logger;
+        this.modelWidth = modelWidth;
+        this.modelHeight = modelHeight;
+        this.meanValue = meanValue;
+        this.stdValue = stdValue;
         // 申请native内存
-        int inputSize = 1 * 3 * inputHeight * inputWidth;
+        int inputSize = 1 * 3 * modelHeight * modelWidth;
         inputByteBuffer = ByteBuffer.allocateDirect(inputSize * 4);
         inputByteBuffer.order(ByteOrder.nativeOrder());
         inputFloatBuffer = inputByteBuffer.asFloatBuffer();
-        inputShape = new long[]{1, 3, inputHeight, inputWidth};
+        inputShape = new long[]{1, 3, modelHeight, modelWidth};
         // 创建模型环境
         env = OrtEnvironment.getEnvironment();
         OrtSession.SessionOptions sessionOptions = createSessionOptions();
@@ -78,6 +86,22 @@ public abstract class OnnxDeployer<T> implements AutoCloseable {
         }
     }
 
+    // 归一化
+    private float[] normalize(byte[] rgbData) {
+        int size = modelWidth * modelHeight;
+        float[] inputData = new float[size * 3];
+        for (int i = 0; i < size; i++) {
+            int pixelIndex = i * 3;
+            float r = (rgbData[pixelIndex] & 0xFF) / 255.0f;
+            float g = (rgbData[pixelIndex + 1] & 0xFF) / 255.0f;
+            float b = (rgbData[pixelIndex + 2] & 0xFF) / 255.0f;
+            inputData[i] = (r - meanValue) / stdValue;
+            inputData[i + size] = (g - meanValue) / stdValue;
+            inputData[i + 2 * size] = (b - meanValue) / stdValue;
+        }
+        return inputData;
+    }
+
     // 运行模型
     private OrtSession.Result runSession() throws OrtException {
         try (OnnxTensor inputTensor = OnnxTensor.createTensor(env, inputByteBuffer, inputShape, OnnxJavaType.FLOAT)) {
@@ -86,9 +110,9 @@ public abstract class OnnxDeployer<T> implements AutoCloseable {
     }
 
     // 运行
-    protected T inference(Bitmap originalBitmap) {
+    protected ResultType inference(byte[] rgbData) {
         synchronized (lock) {
-            float[] inputData = preprocess(originalBitmap);
+            float[] inputData = normalize(rgbData);
             // 更新输入缓冲区数据
             inputByteBuffer.rewind();
             inputFloatBuffer.rewind();

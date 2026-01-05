@@ -1,10 +1,8 @@
 package com.example.model;
 
-import android.graphics.Bitmap;
 import com.example.model.api.Logger;
 import com.example.model.api.ModelLoader;
 import com.example.model.base.OnnxDeployer;
-import com.example.model.util.ModelImageHelper;
 import ai.onnxruntime.*;
 
 public class PlateRecognizer extends OnnxDeployer<PlateRecognizer.Result> {
@@ -20,8 +18,8 @@ public class PlateRecognizer extends OnnxDeployer<PlateRecognizer.Result> {
     private static final String MODEL_NAME = "car_rec.onnx";
 
     // 模型参数
-    private static final int INPUT_WIDTH = 168;
-    private static final int INPUT_HEIGHT = 48;
+    public static final int MODEL_WIDTH = 168;
+    public static final int MODEL_HEIGHT = 48;
     private static final float MEAN_VALUE = 0.588f; // 均值
     private static final float STD_VALUE = 0.193f;  // 标准差
 
@@ -29,34 +27,16 @@ public class PlateRecognizer extends OnnxDeployer<PlateRecognizer.Result> {
     private static final String[] COLOR_LIST = {"黑色", "蓝色", "绿色", "白色", "黄色"};
     private static final String NAME_LIST = "#京沪津渝冀晋蒙辽吉黑苏浙皖闽赣鲁豫鄂湘粤桂琼川贵云藏陕甘青宁新学警港澳挂使领民航危0123456789ABCDEFGHJKLMNPQRSTUVWXYZ险品";
 
-    // 检测框，用于预处理时裁剪图像
-    private int[] bbox;
-
     public PlateRecognizer(ModelLoader modelLoader, Logger logger) {
-        super(modelLoader, logger, MODEL_NAME, INPUT_WIDTH, INPUT_HEIGHT);
+        super(modelLoader, logger, MODEL_NAME, MODEL_WIDTH, MODEL_HEIGHT, MEAN_VALUE, STD_VALUE);
     }
 
     // 运行
-    public String run(Bitmap originalBitmap, int[] bbox) {
-        this.bbox = bbox;
-        Result result = super.inference(originalBitmap);
+    public String run(byte[] rgbData) {
+        Result result = super.inference(rgbData);
         String number = result.number;
         logger.info(TAG, "plate number recognized: " + number);
         return number;
-    }
-
-    // 预处理
-    @Override
-    protected float[] preprocess(Bitmap originalBitmap) {
-        // 裁减
-        Bitmap cutBitmap = ModelImageHelper.cutBitmapByBox(originalBitmap, bbox, 0);
-        // 拉伸缩放
-        Bitmap resizedBitmap = Bitmap.createScaledBitmap(cutBitmap, INPUT_WIDTH, INPUT_HEIGHT, true);
-        cutBitmap.recycle();
-        // 标准归一化
-        float[] inputData = ModelImageHelper.normalizeBitmap(resizedBitmap, INPUT_WIDTH, INPUT_HEIGHT, MEAN_VALUE, STD_VALUE);
-        resizedBitmap.recycle();
-        return inputData;
     }
 
     // 后处理

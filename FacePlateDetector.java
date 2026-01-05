@@ -1,12 +1,8 @@
 package com.example.model;
 
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Matrix;
 import com.example.model.api.Logger;
 import com.example.model.api.ModelLoader;
 import com.example.model.base.OnnxDeployer;
-import com.example.model.util.ModelImageHelper;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,10 +16,14 @@ import ai.onnxruntime.TensorInfo;
 public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Result>> {
 
     public static class Result {
-        public int[] bbox;
-        public float threshold;
-        public List<float[]> landmarks;
-        public int classId;
+        public int[] bbox;              // 检测框
+        public float confidence;        // 置信度
+        public int classId;             // 类别 0-车牌 1-人脸
+        // 以下成员在classId为人脸时才有意义
+        public List<float[]> landmarks; // 关键点
+        public float yaw;               // 偏航角
+        public float pitch;             // 俯仰角
+        public float roll;              // 翻滚角
     }
 
     private static final String TAG = "MyLogcat-FacePlateDetector";
@@ -32,51 +32,31 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
     private static final String MODEL_NAME = "car_face_det.onnx";
 
     // 模型参数
-    private static final int INPUT_WIDTH = 640;
-    private static final int INPUT_HEIGHT = 640;
+    public static final int MODEL_WIDTH = 640;
+    public static final int MODEL_HEIGHT = 640;
     private static final float CONF_THRESHOLD = 0.3f;   // 置信度阈值
     private static final float IOU_THRESHOLD = 0.5f;    // 重合阈值
+    private static final float MEAN_VALUE = 0.0f;
+    private static final float STD_VALUE = 1.5f;
 
     // 输入图像尺寸
-    private int previewWidth;
-    private int previewHeight;
+    private int inputWidth;
+    private int inputHeight;
 
     public FacePlateDetector(ModelLoader modelLoader, Logger logger) {
-        super(modelLoader, logger, MODEL_NAME, INPUT_WIDTH, INPUT_HEIGHT);
+        super(modelLoader, logger, MODEL_NAME, MODEL_WIDTH, MODEL_HEIGHT, MEAN_VALUE, STD_VALUE);
     }
 
     // 运行
-    public List<Result> run(Bitmap originalBitmap) {
-        this.previewWidth = originalBitmap.getWidth();
-        this.previewHeight = originalBitmap.getHeight();
+    public List<Result> run(byte[] rgbData, int inputWidth, int inputHeight) {
+        this.inputWidth = inputWidth;
+        this.inputHeight = inputHeight;
         long startTime = System.currentTimeMillis();
-        List<Result> results = super.inference(originalBitmap);
+        List<Result> results = super.inference(rgbData);
         if (!results.isEmpty()) {
             logger.debug(TAG, String.format("run detection in %d ms, %d objects", System.currentTimeMillis() - startTime, results.size()));
         }
         return results;
-    }
-
-    // 预处理
-    @Override
-    protected float[] preprocess(Bitmap originalBitmap) {
-        // 保持比例居中缩放
-        Bitmap resizedBitmap = Bitmap.createBitmap(INPUT_WIDTH, INPUT_HEIGHT, Bitmap.Config.RGB_565);
-        // Bitmap自带的缩放API产生的图像会变形，导致关键点错位，需要保持原始图像比例
-        float scale = Math.min((float) INPUT_WIDTH / originalBitmap.getWidth(), (float) INPUT_HEIGHT / originalBitmap.getHeight());
-        int newWidth = Math.round(originalBitmap.getWidth() * scale);
-        int newHeight = Math.round(originalBitmap.getHeight() * scale);
-        Canvas canvas = new Canvas(resizedBitmap);
-        Matrix matrix = new Matrix();
-        matrix.postScale(scale, scale);
-        float left = (INPUT_WIDTH - newWidth) / 2.0f;
-        float top = (INPUT_HEIGHT - newHeight) / 2.0f;
-        matrix.postTranslate(left, top);
-        canvas.drawBitmap(originalBitmap, matrix, null);
-        // 简单归一化
-        float[] inputData = ModelImageHelper.normalizeBitmap(resizedBitmap, INPUT_WIDTH, INPUT_HEIGHT, 0.0f, 1.0f);
-        resizedBitmap.recycle();
-        return inputData;
     }
 
     // 后处理
@@ -111,32 +91,32 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
         List<Float> thresholdList = new ArrayList<>();
         List<Integer> classIdList = new ArrayList<>();
         List<float[]> landmarksList = new ArrayList<>();
-        float scale = Math.min((float) INPUT_WIDTH / previewWidth, (float) INPUT_HEIGHT / previewHeight);
-        int padX = (INPUT_WIDTH - (int)(previewWidth * scale)) / 2;
-        int padY = (INPUT_HEIGHT - (int)(previewHeight * scale)) / 2;
+        float scale = Math.min((float) MODEL_WIDTH / inputWidth, (float) MODEL_HEIGHT / inputHeight);
+        int padX = (MODEL_WIDTH - (int)(inputWidth * scale)) / 2;
+        int padY = (MODEL_HEIGHT - (int)(inputHeight * scale)) / 2;
         // 解析输出结构
         for (float[] output : outputs) {
             float confidence = output[4];
             float plateScore = output[15];
             float faceScore = output[16];
-            float threshold = confidence * Math.max(plateScore, faceScore); // 输出置信度*最高类别分数=最终置信度
-            if (threshold < CONF_THRESHOLD) {
+            float finalConfidence = confidence * Math.max(plateScore, faceScore); // 输出置信度*最高类别分数=最终置信度
+            if (finalConfidence < CONF_THRESHOLD) {
                 continue;
             }
-            thresholdList.add(threshold);
+            thresholdList.add(finalConfidence);
             classIdList.add(plateScore > faceScore ? 0 : 1);
             // 输出的检测框和特征点坐标缩放到原图比例
             float x = output[0], y = output[1], w = output[2], h = output[3];
             float[] bbox = new float[4];
-            bbox[0] = Math.max(0, Math.min(previewWidth, (x - w / 2 - padX) / scale));
-            bbox[1] = Math.max(0, Math.min(previewHeight, (y - h / 2 - padY) / scale));
-            bbox[2] = Math.max(0, Math.min(previewWidth, (x + w / 2 - padX) / scale));
-            bbox[3] = Math.max(0, Math.min(previewHeight, (y + h / 2 - padY) / scale));
+            bbox[0] = Math.max(0, Math.min(inputWidth, (x - w / 2 - padX) / scale));
+            bbox[1] = Math.max(0, Math.min(inputHeight, (y - h / 2 - padY) / scale));
+            bbox[2] = Math.max(0, Math.min(inputWidth, (x + w / 2 - padX) / scale));
+            bbox[3] = Math.max(0, Math.min(inputHeight, (y + h / 2 - padY) / scale));
             bboxList.add(bbox);
             float[] landmarks = new float[10];
             for (int i = 0; i < 10; i += 2) {
-                landmarks[i] = Math.max(0, Math.min(previewWidth, (output[5 + i] - padX) / scale));
-                landmarks[i + 1] = Math.max(0, Math.min(previewHeight, (output[6 + i] - padY) / scale));
+                landmarks[i] = Math.max(0, Math.min(inputWidth, (output[5 + i] - padX) / scale));
+                landmarks[i + 1] = Math.max(0, Math.min(inputHeight, (output[6 + i] - padY) / scale));
             }
             landmarksList.add(landmarks);
         }
@@ -170,16 +150,60 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
         // 创建结果
         for (int keepIndex : keepIndexes) {
             float[] bbox = bboxList.get(keepIndex);
-            float[] landmarks = landmarksList.get(keepIndex);
-            List<float[]> landmarkPoints = new ArrayList<>();
-            for (int i = 0; i < 5; i++) {
-                landmarkPoints.add(new float[]{landmarks[i * 2], landmarks[i * 2 + 1]});
-            }
             Result result = new Result();
             result.bbox = new int[]{(int) bbox[0], (int) bbox[1], (int) bbox[2], (int) bbox[3]};
-            result.threshold = thresholdList.get(keepIndex);
-            result.landmarks = landmarkPoints;
+            result.confidence = thresholdList.get(keepIndex);
             result.classId = classIdList.get(keepIndex);
+            if (result.classId == 1) {
+                float[] landmarks = landmarksList.get(keepIndex);
+                List<float[]> landmarkPoints = new ArrayList<>();
+                for (int i = 0; i < 5; i++) {
+                    landmarkPoints.add(new float[]{landmarks[i * 2], landmarks[i * 2 + 1]});
+                }
+                result.landmarks = landmarkPoints;
+                float[] leftEye = result.landmarks.get(0);
+                float[] rightEye = result.landmarks.get(1);
+                float[] nose = result.landmarks.get(2);
+                float[] mouthLeft = result.landmarks.get(3);
+                float[] mouthRight = result.landmarks.get(4);
+                float eyeCenterY = (leftEye[1] + rightEye[1]) / 2.0f;
+                float mouthCenterY = (mouthLeft[1] + mouthRight[1]) / 2.0f;
+                float expectedNoseY = (eyeCenterY + mouthCenterY) / 2.0f;
+                float noseDeviation = nose[1] - expectedNoseY;
+                float faceHeight = Math.abs(mouthCenterY - eyeCenterY);
+                float pitch;
+                if (faceHeight > 0.0f) {
+                    float ratio = noseDeviation / faceHeight;
+                    if (ratio < -1.0f) ratio = -1.0f;
+                    if (ratio > 1.0f) ratio = 1.0f;
+                    pitch = ratio * 20.0f;
+                } else {
+                    pitch = 0.0f;
+                }
+                float eyeCenterX = (leftEye[0] + rightEye[0]) / 2.0f;
+                float eyeDistance = Math.abs(rightEye[0] - leftEye[0]);
+                float noseOffset = nose[0] - eyeCenterX;
+                float yaw;
+                if (eyeDistance > 0.0f) {
+                    float ratio = noseOffset / eyeDistance;
+                    if (ratio < -1.0f) ratio = -1.0f;
+                    if (ratio > 1.0f) ratio = 1.0f;
+                    yaw = ratio * 30.0f;
+                } else {
+                    yaw = 0.0f;
+                }
+                float eyeDx = rightEye[0] - leftEye[0];
+                float eyeDy = rightEye[1] - leftEye[1];
+                float roll;
+                if (Math.abs(eyeDx) > 0.0f) {
+                    roll = (float) Math.toDegrees(Math.atan(eyeDy / eyeDx));
+                } else {
+                    roll = 0.0f;
+                }
+                result.pitch = pitch;
+                result.yaw = yaw;
+                result.roll = roll;
+            }
             results.add(result);
         }
         return results;

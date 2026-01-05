@@ -1,10 +1,8 @@
 package com.example.model;
 
-import android.graphics.Bitmap;
 import com.example.model.api.Logger;
 import com.example.model.api.ModelLoader;
 import com.example.model.base.OnnxDeployer;
-import com.example.model.util.ModelImageHelper;
 import ai.onnxruntime.*;
 import java.nio.FloatBuffer;
 
@@ -20,30 +18,19 @@ public class FaceRecognizer extends OnnxDeployer<FaceRecognizer.Result> {
     private static final String MODEL_NAME = "face_rec.onnx";
 
     // 模型参数
-    public static final int INPUT_WIDTH = 112;
-    public static final int INPUT_HEIGHT = 112;
-    private static final float MEAN_VALUE = 0.5f; // 均值
-    private static final float STD_VALUE = 0.5f;  // 标准差
+    public static final int MODEL_WIDTH = 112;
+    public static final int MODEL_HEIGHT = 112;
+    private static final float MEAN_VALUE = 0.5f;
+    private static final float STD_VALUE = 0.5f;
 
     public FaceRecognizer(ModelLoader modelLoader, Logger logger) {
-        super(modelLoader, logger, MODEL_NAME, INPUT_WIDTH, INPUT_HEIGHT);
+        super(modelLoader, logger, MODEL_NAME, MODEL_WIDTH, MODEL_HEIGHT, MEAN_VALUE, STD_VALUE);
     }
 
     // 运行
-    public float[] run(Bitmap originalBitmap) {
-        Result result = super.inference(originalBitmap);
+    public float[] run(byte[] rgbData) {
+        Result result = super.inference(rgbData);
         return result.features;
-    }
-
-    // 预处理
-    @Override
-    protected float[] preprocess(Bitmap originalBitmap) {
-        // 拉伸缩放
-        Bitmap resizedBitmap = Bitmap.createScaledBitmap(originalBitmap, INPUT_WIDTH, INPUT_HEIGHT, true);
-        // 归一化
-        float[] inputData = ModelImageHelper.normalizeBitmap(resizedBitmap, INPUT_WIDTH, INPUT_HEIGHT, MEAN_VALUE, STD_VALUE);
-        resizedBitmap.recycle();
-        return inputData;
     }
 
     // 后处理
