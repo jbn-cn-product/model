@@ -1,6 +1,5 @@
 package com.example.model;
 
-import com.example.model.api.ModelLoader;
 import com.example.model.base.OnnxDeployer;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
@@ -27,9 +26,6 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
 
     private static final String TAG = "MyLogcat-FacePlateDetector";
 
-    // 文件
-    private static final String MODEL_NAME = "car_face_det.onnx";
-
     // 模型参数
     public static final int MODEL_WIDTH = 640;
     public static final int MODEL_HEIGHT = 640;
@@ -42,8 +38,8 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
     private int inputWidth;
     private int inputHeight;
 
-    public FacePlateDetector(ModelLoader modelLoader, Logger logger) {
-        super(modelLoader, logger, MODEL_NAME, MODEL_WIDTH, MODEL_HEIGHT, MEAN_VALUE, STD_VALUE);
+    public FacePlateDetector(byte[] modelData, Logger logger) {
+        super(modelData, logger, MODEL_WIDTH, MODEL_HEIGHT, MEAN_VALUE, STD_VALUE);
     }
 
     // 运行

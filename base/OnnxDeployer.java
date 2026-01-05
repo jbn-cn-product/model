@@ -1,7 +1,5 @@
 package com.example.model.base;
 
-import com.example.model.api.ModelLoader;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -46,7 +44,7 @@ public abstract class OnnxDeployer<ResultType> implements AutoCloseable {
     // 接口
     protected Logger logger;
 
-    protected OnnxDeployer(ModelLoader modelLoader, Logger logger, String modelName, int modelWidth, int modelHeight, float meanValue, float stdValue) {
+    protected OnnxDeployer(byte[] modelData, Logger logger, int modelWidth, int modelHeight, float meanValue, float stdValue) {
         this.logger = logger;
         this.modelWidth = modelWidth;
         this.modelHeight = modelHeight;
@@ -63,9 +61,8 @@ public abstract class OnnxDeployer<ResultType> implements AutoCloseable {
         OrtSession.SessionOptions sessionOptions = createSessionOptions();
         // 创建模型会话，打开模型文件，建立字节流
         try {
-            byte[] modelData = modelLoader.getModelData(modelName);
             session = env.createSession(modelData, sessionOptions);
-        } catch (IOException | OrtException e) {
+        } catch (OrtException e) {
             logger.error(TAG, "Failed to initialize ONNX Runtime: " + e);
             throw new RuntimeException();
         }

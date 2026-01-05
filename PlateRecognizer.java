@@ -1,6 +1,5 @@
 package com.example.model;
 
-import com.example.model.api.ModelLoader;
 import com.example.model.base.OnnxDeployer;
 import ai.onnxruntime.*;
 
@@ -13,9 +12,6 @@ public class PlateRecognizer extends OnnxDeployer<PlateRecognizer.Result> {
 
     private static final String TAG = "MyLogcat-PlateRecognizer";
 
-    // 文件
-    private static final String MODEL_NAME = "car_rec.onnx";
-
     // 模型参数
     public static final int MODEL_WIDTH = 168;
     public static final int MODEL_HEIGHT = 48;
@@ -26,8 +22,8 @@ public class PlateRecognizer extends OnnxDeployer<PlateRecognizer.Result> {
     private static final String[] COLOR_LIST = {"黑色", "蓝色", "绿色", "白色", "黄色"};
     private static final String NAME_LIST = "#京沪津渝冀晋蒙辽吉黑苏浙皖闽赣鲁豫鄂湘粤桂琼川贵云藏陕甘青宁新学警港澳挂使领民航危0123456789ABCDEFGHJKLMNPQRSTUVWXYZ险品";
 
-    public PlateRecognizer(ModelLoader modelLoader, Logger logger) {
-        super(modelLoader, logger, MODEL_NAME, MODEL_WIDTH, MODEL_HEIGHT, MEAN_VALUE, STD_VALUE);
+    public PlateRecognizer(byte[] modelData, Logger logger) {
+        super(modelData, logger, MODEL_WIDTH, MODEL_HEIGHT, MEAN_VALUE, STD_VALUE);
     }
 
     // 运行
