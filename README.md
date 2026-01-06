@@ -113,7 +113,7 @@ public class Recognizer implements AutoCloseable {
     }
 
     // 检测
-    private void run(Bitmap bitmap) {
+    public void run(Bitmap bitmap) {
         // 缩放到目标尺寸
         Bitmap resizedBitmap = ImageProcesser.resizeBitmap(bitmap, FaceRecognizer.MODEL_WIDTH, FaceRecognizer.MODEL_HEIGHT, false);
         // 转换成RGB数组
