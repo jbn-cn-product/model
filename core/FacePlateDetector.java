@@ -65,7 +65,7 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
             buffer = tensor.getFloatBuffer();
             outputShape = tensorInfo.getShape();
         } catch (OrtException e) {
-            logger.error(TAG, "update output tensor failed");
+            logger.error(TAG, "update output tensor failed: " + e.getMessage());
             return Collections.emptyList();
         }
         float[] outputArray = new float[buffer.remaining()];

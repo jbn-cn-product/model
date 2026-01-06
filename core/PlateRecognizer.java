@@ -44,7 +44,7 @@ public class PlateRecognizer extends OnnxDeployer<PlateRecognizer.Result> {
             result.color = decodeColor(((float[][]) colorTensor.getValue())[0]);
             return result;
         } catch (OrtException e) {
-            logger.error(TAG, "update output tensor failed");
+            logger.error(TAG, "update output tensor failed: " + e.getMessage());
             return null;
         }
     }

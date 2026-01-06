@@ -32,9 +32,13 @@ public class FaceRecognizer extends OnnxDeployer<FaceRecognizer.Result> {
     @Override
     protected Result postprocess(OrtSession.Result sessionResult) {
         Result result = new Result();
-        OnnxTensor tensor = (OnnxTensor) sessionResult.get(0);
-        FloatBuffer buffer = tensor.getFloatBuffer();
-        tensor.close(); // 测试
+        FloatBuffer buffer;
+        try (OnnxTensor tensor = (OnnxTensor) sessionResult.get(0)) {
+            buffer = tensor.getFloatBuffer();
+        } catch (Exception e) {
+            logger.error(TAG, "update output tensor failed: " + e.getMessage());
+            return null;
+        }
         float[] outputs = new float[buffer.remaining()];
         buffer.get(outputs);
         float norm = 0.0f;
