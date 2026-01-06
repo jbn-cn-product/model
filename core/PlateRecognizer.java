@@ -15,8 +15,8 @@ public class PlateRecognizer extends OnnxDeployer<PlateRecognizer.Result> {
     // 模型参数
     public static final int MODEL_WIDTH = 168;
     public static final int MODEL_HEIGHT = 48;
-    private static final float MEAN_VALUE = 0.588f; // 均值
-    private static final float STD_VALUE = 0.193f;  // 标准差
+    private static final float MEAN_VALUE = 0.588f;
+    private static final float STD_VALUE = 0.193f;
 
     // 字符集
     private static final String[] COLOR_LIST = {"黑色", "蓝色", "绿色", "白色", "黄色"};
