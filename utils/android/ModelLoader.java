@@ -8,7 +8,7 @@ import java.io.InputStream;
 
 public class ModelLoader {
 
-    private static final String TAG = "MyLogcat-ImageHelper";
+    private static final String TAG = "MyLogcat-ModelLoader";
 
     public static byte[] getModelData(Context context, String modelName) {
         try (InputStream is = context.getAssets().open(modelName);

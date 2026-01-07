@@ -11,7 +11,7 @@ import java.util.List;
 
 public class ImageProcesser {
 
-    private static final String TAG = "MyLogcat-ImageHelper";
+    private static final String TAG = "MyLogcat-ImageProcesser";
 
     // 缩放
     public static Bitmap resizeBitmap(Bitmap bitmap, int width, int height, boolean keepScale) {
