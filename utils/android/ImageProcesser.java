@@ -48,12 +48,12 @@ public class ImageProcesser {
     }
 
     // 根据给定框裁减图像
-    public static Bitmap cutBitmapByBox(Bitmap bitmap, int[] bbox, int expandPixels) {
+    public static Bitmap cutBitmapByBox(Bitmap bitmap, FacePlateDetector.Box box, int expandPixels) {
         // 各方向扩大指定像素
-        int left = Math.max(0, bbox[0] - expandPixels);
-        int top = Math.max(0, bbox[1] - expandPixels);
-        int right = Math.min(bitmap.getWidth(), bbox[2] + expandPixels);
-        int bottom = Math.min(bitmap.getHeight(), bbox[3] + expandPixels);
+        int left = Math.max(0, box.x - expandPixels);
+        int top = Math.max(0, box.y - expandPixels);
+        int right = Math.min(bitmap.getWidth(), box.w + expandPixels);
+        int bottom = Math.min(bitmap.getHeight(), box.h + expandPixels);
         if (right <= left || bottom <= top) {
             return bitmap;
         }
@@ -78,13 +78,13 @@ public class ImageProcesser {
         textPaint.setTextSize(24f);
         textPaint.setFakeBoldText(true);
         // 配置关键点
-        Paint landmarksPaint = new Paint();
-        landmarksPaint.setColor(Color.RED);
-        landmarksPaint.setStrokeWidth(5f);
+        Paint pointPaint = new Paint();
+        pointPaint.setColor(Color.RED);
+        pointPaint.setStrokeWidth(5f);
         for (FacePlateDetector.Result result : results) {
             // 绘制边界框
-            int[] bbox = result.bbox;
-            RectF bboxRectF = new RectF(bbox[0], bbox[1], bbox[2], bbox[3]);
+            FacePlateDetector.Box box = result.box;
+            RectF bboxRectF = new RectF(box.x, box.y, box.w, box.h);
             canvas.drawRect(bboxRectF, bboxPaint);
             // 绘制文本
             String label = String.format("confidence: %.2f", result.confidence);
@@ -97,8 +97,17 @@ public class ImageProcesser {
             canvas.drawRect(textBg, textBgPaint);
             canvas.drawText(label, bboxRectF.left + 5, bboxRectF.top - 5, textPaint);
             // 绘制关键点
-            for (float[] landmark : result.landmarks) {
-                canvas.drawPoint(landmark[0], landmark[1], landmarksPaint);
+            if (result.classId == 0) {
+                canvas.drawPoint(result.plate.vertexLeftTop[0], result.plate.vertexLeftTop[1], pointPaint);
+                canvas.drawPoint(result.plate.vertexRightTop[0], result.plate.vertexRightTop[1], pointPaint);
+                canvas.drawPoint(result.plate.vertexRightBottom[0], result.plate.vertexRightBottom[1], pointPaint);
+                canvas.drawPoint(result.plate.vertexLeftBottom[0], result.plate.vertexLeftBottom[1], pointPaint);
+            } else if (result.classId == 1) {
+                canvas.drawPoint(result.face.landmarkLeftEye[0], result.face.landmarkLeftEye[1], pointPaint);
+                canvas.drawPoint(result.face.landmarkRightEye[0], result.face.landmarkRightEye[1], pointPaint);
+                canvas.drawPoint(result.face.landmarkNose[0], result.face.landmarkNose[1], pointPaint);
+                canvas.drawPoint(result.face.landmarkLeftMouth[0], result.face.landmarkLeftMouth[1], pointPaint);
+                canvas.drawPoint(result.face.landmarkRightMouth[0], result.face.landmarkRightMouth[1], pointPaint);
             }
         }
         return resultBitmap;
