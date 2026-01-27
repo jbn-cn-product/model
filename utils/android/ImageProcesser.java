@@ -16,17 +16,13 @@ public class ImageProcesser {
     // 缩放
     public static Bitmap resizeBitmap(Bitmap bitmap, int width, int height, boolean keepScale) {
         if (keepScale) {
-            // Bitmap自带的缩放方法处理的图像会变形，导致关键点错位，需要填充以保持原始比例
+            // Bitmap自带的缩放方法处理的图像会变形，导致关键点错位，在右边或下方填充黑色区域以保持原始比例
             Bitmap resizedBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
             float scale = Math.min((float) width / bitmap.getWidth(), (float) height / bitmap.getHeight());
-            int newWidth = Math.round(bitmap.getWidth() * scale);
-            int newHeight = Math.round(bitmap.getHeight() * scale);
             Canvas canvas = new Canvas(resizedBitmap);
             Matrix matrix = new Matrix();
             matrix.postScale(scale, scale);
-            float left = (width - newWidth) / 2.0f;
-            float top = (height - newHeight) / 2.0f;
-            matrix.postTranslate(left, top);
+            matrix.postTranslate(0, 0);
             canvas.drawBitmap(bitmap, matrix, null);
             return resizedBitmap;
         } else {
