@@ -16,9 +16,9 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
     public static class Result {
         public int[] bbox;              // 检测框
         public float confidence;        // 置信度
+        public List<float[]> landmarks; // 关键点
         public int classId;             // 类别 0-车牌 1-人脸
         // 以下成员在classId为人脸时才有意义
-        public List<float[]> landmarks; // 关键点
         public float yaw;               // 偏航角
         public float pitch;             // 俯仰角
         public float roll;              // 翻滚角
@@ -34,18 +34,12 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
     private static final float MEAN_VALUE = 0.0f;
     private static final float STD_VALUE = 1.5f;
 
-    // 输入图像尺寸
-    private int inputWidth;
-    private int inputHeight;
-
     public FacePlateDetector(Logger logger, byte[] modelData) {
         super(logger, modelData, MODEL_WIDTH, MODEL_HEIGHT, MEAN_VALUE, STD_VALUE);
     }
 
     // 运行
-    public List<Result> run(byte[] rgbData, int inputWidth, int inputHeight) {
-        this.inputWidth = inputWidth;
-        this.inputHeight = inputHeight;
+    public List<Result> run(byte[] rgbData) {
         long startTime = System.currentTimeMillis();
         List<Result> results = super.inference(rgbData);
         if (!results.isEmpty()) {
@@ -86,9 +80,6 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
         List<Float> thresholdList = new ArrayList<>();
         List<Integer> classIdList = new ArrayList<>();
         List<float[]> landmarksList = new ArrayList<>();
-        float scale = Math.min((float) MODEL_WIDTH / inputWidth, (float) MODEL_HEIGHT / inputHeight);
-        int padX = (MODEL_WIDTH - (int)(inputWidth * scale)) / 2;
-        int padY = (MODEL_HEIGHT - (int)(inputHeight * scale)) / 2;
         // 解析输出结构
         for (float[] output : outputs) {
             float confidence = output[4];
@@ -100,18 +91,17 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
             }
             thresholdList.add(finalConfidence);
             classIdList.add(plateScore > faceScore ? 0 : 1);
-            // 输出的检测框和特征点坐标缩放到原图比例
             float x = output[0], y = output[1], w = output[2], h = output[3];
             float[] bbox = new float[4];
-            bbox[0] = Math.max(0, Math.min(inputWidth, (x - w / 2 - padX) / scale));
-            bbox[1] = Math.max(0, Math.min(inputHeight, (y - h / 2 - padY) / scale));
-            bbox[2] = Math.max(0, Math.min(inputWidth, (x + w / 2 - padX) / scale));
-            bbox[3] = Math.max(0, Math.min(inputHeight, (y + h / 2 - padY) / scale));
+            bbox[0] = x - w / 2;
+            bbox[1] = y - h / 2;
+            bbox[2] = x + w / 2;
+            bbox[3] = y + h / 2;
             bboxList.add(bbox);
             float[] landmarks = new float[10];
             for (int i = 0; i < 10; i += 2) {
-                landmarks[i] = Math.max(0, Math.min(inputWidth, (output[5 + i] - padX) / scale));
-                landmarks[i + 1] = Math.max(0, Math.min(inputHeight, (output[6 + i] - padY) / scale));
+                landmarks[i] = output[5 + i];
+                landmarks[i + 1] = output[6 + i];
             }
             landmarksList.add(landmarks);
         }
