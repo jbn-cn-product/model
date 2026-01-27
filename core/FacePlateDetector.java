@@ -149,13 +149,13 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
             result.bbox = new int[]{(int) bbox[0], (int) bbox[1], (int) bbox[2], (int) bbox[3]};
             result.confidence = thresholdList.get(keepIndex);
             result.classId = classIdList.get(keepIndex);
+            float[] landmarks = landmarksList.get(keepIndex);
+            List<float[]> landmarkPoints = new ArrayList<>();
+            for (int i = 0; i < 5; i++) {
+                landmarkPoints.add(new float[]{landmarks[i * 2], landmarks[i * 2 + 1]});
+            }
+            result.landmarks = landmarkPoints;
             if (result.classId == 1) {
-                float[] landmarks = landmarksList.get(keepIndex);
-                List<float[]> landmarkPoints = new ArrayList<>();
-                for (int i = 0; i < 5; i++) {
-                    landmarkPoints.add(new float[]{landmarks[i * 2], landmarks[i * 2 + 1]});
-                }
-                result.landmarks = landmarkPoints;
                 float[] leftEye = result.landmarks.get(0);
                 float[] rightEye = result.landmarks.get(1);
                 float[] nose = result.landmarks.get(2);

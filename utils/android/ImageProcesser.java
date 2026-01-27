@@ -100,11 +100,9 @@ public class ImageProcesser {
             );
             canvas.drawRect(textBg, textBgPaint);
             canvas.drawText(label, bboxRectF.left + 5, bboxRectF.top - 5, textPaint);
-            if (result.classId == 1) {
-                // 绘制关键点
-                for (float[] landmark : result.landmarks) {
-                    canvas.drawPoint(landmark[0], landmark[1], landmarksPaint);
-                }
+            // 绘制关键点
+            for (float[] landmark : result.landmarks) {
+                canvas.drawPoint(landmark[0], landmark[1], landmarksPaint);
             }
         }
         return resultBitmap;
