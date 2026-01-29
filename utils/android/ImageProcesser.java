@@ -7,6 +7,8 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import com.example.model.core.FacePlateDetector;
+import com.example.model.structure.Common;
+
 import java.util.List;
 
 public class ImageProcesser {
@@ -48,7 +50,7 @@ public class ImageProcesser {
     }
 
     // 根据给定框裁减图像
-    public static Bitmap cutBitmapByBox(Bitmap bitmap, FacePlateDetector.Box box, int expandPixels) {
+    public static Bitmap cutBitmapByBox(Bitmap bitmap, Common.Box box, int expandPixels) {
         // 各方向扩大指定像素
         int left = Math.max(0, box.x - expandPixels);
         int top = Math.max(0, box.y - expandPixels);
@@ -65,10 +67,10 @@ public class ImageProcesser {
         Bitmap resultBitmap = bitmap.copy(Bitmap.Config.RGB_565, true);
         Canvas canvas = new Canvas(resultBitmap);
         // 配置边界框
-        Paint bboxPaint = new Paint();
-        bboxPaint.setStyle(Paint.Style.STROKE);
-        bboxPaint.setStrokeWidth(3f);
-        bboxPaint.setColor(Color.GREEN);
+        Paint boxPaint = new Paint();
+        boxPaint.setStyle(Paint.Style.STROKE);
+        boxPaint.setStrokeWidth(3f);
+        boxPaint.setColor(Color.GREEN);
         // 配置文本
         Paint textBgPaint = new Paint();
         textBgPaint.setColor(Color.BLACK);
@@ -83,31 +85,31 @@ public class ImageProcesser {
         pointPaint.setStrokeWidth(5f);
         for (FacePlateDetector.Result result : results) {
             // 绘制边界框
-            FacePlateDetector.Box box = result.box;
-            RectF bboxRectF = new RectF(box.x, box.y, box.w, box.h);
-            canvas.drawRect(bboxRectF, bboxPaint);
+            Common.Box box = result.box;
+            RectF boxRectF = new RectF(box.x, box.y, box.w, box.h);
+            canvas.drawRect(boxRectF, boxPaint);
             // 绘制文本
-            String label = String.format("confidence: %.2f", result.confidence);
+            String label = String.format("%.2f", result.confidence);
             RectF textBg = new RectF(
-                    bboxRectF.left,
-                    bboxRectF.top - textPaint.getTextSize() - 10,
-                    bboxRectF.left + textPaint.measureText(label) + 10,
-                    bboxRectF.top
+                    boxRectF.left,
+                    boxRectF.top - textPaint.getTextSize() - 10,
+                    boxRectF.left + textPaint.measureText(label) + 10,
+                    boxRectF.top
             );
             canvas.drawRect(textBg, textBgPaint);
-            canvas.drawText(label, bboxRectF.left + 5, bboxRectF.top - 5, textPaint);
+            canvas.drawText(label, boxRectF.left + 5, boxRectF.top - 5, textPaint);
             // 绘制关键点
             if (result.classId == 0) {
-                canvas.drawPoint(result.plate.vertexLeftTop[0], result.plate.vertexLeftTop[1], pointPaint);
-                canvas.drawPoint(result.plate.vertexRightTop[0], result.plate.vertexRightTop[1], pointPaint);
-                canvas.drawPoint(result.plate.vertexRightBottom[0], result.plate.vertexRightBottom[1], pointPaint);
-                canvas.drawPoint(result.plate.vertexLeftBottom[0], result.plate.vertexLeftBottom[1], pointPaint);
+                canvas.drawPoint(result.plateVertexes.lt[0], result.plateVertexes.lt[1], pointPaint);
+                canvas.drawPoint(result.plateVertexes.rt[0], result.plateVertexes.rt[1], pointPaint);
+                canvas.drawPoint(result.plateVertexes.rb[0], result.plateVertexes.rb[1], pointPaint);
+                canvas.drawPoint(result.plateVertexes.lb[0], result.plateVertexes.lb[1], pointPaint);
             } else if (result.classId == 1) {
-                canvas.drawPoint(result.face.landmarkLeftEye[0], result.face.landmarkLeftEye[1], pointPaint);
-                canvas.drawPoint(result.face.landmarkRightEye[0], result.face.landmarkRightEye[1], pointPaint);
-                canvas.drawPoint(result.face.landmarkNose[0], result.face.landmarkNose[1], pointPaint);
-                canvas.drawPoint(result.face.landmarkLeftMouth[0], result.face.landmarkLeftMouth[1], pointPaint);
-                canvas.drawPoint(result.face.landmarkRightMouth[0], result.face.landmarkRightMouth[1], pointPaint);
+                canvas.drawPoint(result.faceLandmarks.leftEye[0], result.faceLandmarks.leftEye[1], pointPaint);
+                canvas.drawPoint(result.faceLandmarks.rightEye[0], result.faceLandmarks.rightEye[1], pointPaint);
+                canvas.drawPoint(result.faceLandmarks.nose[0], result.faceLandmarks.nose[1], pointPaint);
+                canvas.drawPoint(result.faceLandmarks.leftMouth[0], result.faceLandmarks.leftMouth[1], pointPaint);
+                canvas.drawPoint(result.faceLandmarks.rightMouth[0], result.faceLandmarks.rightMouth[1], pointPaint);
             }
         }
         return resultBitmap;
