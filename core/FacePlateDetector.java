@@ -1,14 +1,16 @@
 package com.example.model.core;
 
 import com.example.model.core.base.OnnxDeployer;
-import com.example.model.structure.Common;
+import com.example.model.structure.Common.Box;
+import com.example.model.structure.Common.Point;
 import com.example.model.structure.Face;
 import com.example.model.structure.Plate;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import ai.onnxruntime.OnnxTensor;
 import ai.onnxruntime.OrtException;
 import ai.onnxruntime.OrtSession;
@@ -17,7 +19,7 @@ import ai.onnxruntime.TensorInfo;
 public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Result>> {
 
     public static class Result {
-        public Common.Box box;                  // 检测框
+        public Box box;                         // 检测框
         public float confidence;                // 置信度
         public int classId;                     // 类别 0-车牌 1-人脸
         public Face.Angles faceAngles;          // 人脸姿态
@@ -76,122 +78,100 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
 
     // 解码检测结果
     private List<Result> decodeResult(float[][] outputs) {
-        List<float[]> boxList = new ArrayList<>();
-        List<Float> confidenceList = new ArrayList<>();
-        List<Integer> classIdList = new ArrayList<>();
-        List<float[]> pointList = new ArrayList<>();
+        List<Result> results = new ArrayList<>();
         // 解析输出结构
         for (float[] output : outputs) {
             float confidence = output[4];
-            float plateScore = output[15];
-            float faceScore = output[16];
-            float finalConfidence = confidence * Math.max(plateScore, faceScore); // 输出置信度*最高类别分数=最终置信度
-            if (finalConfidence < CONF_THRESHOLD) {
+            if (confidence < CONF_THRESHOLD) { // 先忽略大多数低置信度结果
                 continue;
             }
-            confidenceList.add(finalConfidence);
-            classIdList.add(plateScore > faceScore ? 0 : 1);
-            float x = output[0], y = output[1], w = output[2], h = output[3];
-            float[] box = new float[4];
-            box[0] = x - w / 2;
-            box[1] = y - h / 2;
-            box[2] = x + w / 2;
-            box[3] = y + h / 2;
-            boxList.add(box);
-            float[] point = new float[10];
-            for (int i = 0; i < 10; i += 2) {
-                point[i] = output[5 + i];
-                point[i + 1] = output[6 + i];
-            }
-            pointList.add(point);
-        }
-        // NMS过滤多个重复检测框
-        List<Integer> order = new ArrayList<>();
-        for (int i = 0; i < confidenceList.size(); i++) {
-            order.add(i);
-        }
-        order.sort((a, b) -> Float.compare(confidenceList.get(b), confidenceList.get(a)));
-        List<Integer> keepIndexes = new ArrayList<>();
-        while (!order.isEmpty()) {
-            int current = order.remove(0);
-            keepIndexes.add(current);
-            Iterator<Integer> it = order.iterator();
-            while (it.hasNext()) {
-                float[] box1 = boxList.get(current);
-                float[] box2 = boxList.get(it.next());
-                float x1 = Math.max(box1[0], box2[0]);
-                float x2 = Math.min(box1[2], box2[2]);
-                float y1 = Math.max(box1[1], box2[1]);
-                float y2 = Math.min(box1[3], box2[3]);
-                float interArea = Math.max(0, x2 - x1) * Math.max(0, y2 - y1);
-                if (interArea > 0) {
-                    float iou = interArea / ((box1[2] - box1[0]) * (box1[3] - box1[1]) + (box2[2] - box2[0]) * (box2[3] - box2[1]) - interArea);
-                    if (iou > IOU_THRESHOLD) {
-                        it.remove();
-                    }
-                }
-            }
-        }
-        // 创建结果
-        List<Result> results = new ArrayList<>();
-        for (int keepIndex : keepIndexes) {
-            float[] box = boxList.get(keepIndex);
             Result result = new Result();
-            result.box = new Common.Box((int) box[0], (int) box[1], (int) box[2], (int) box[3]);
-            result.confidence = confidenceList.get(keepIndex);
-            result.classId = classIdList.get(keepIndex);
-            float[] point = pointList.get(keepIndex);
-            List<int[]> points = new ArrayList<>();
-            for (int i = 0; i < 5; i++) {
-                int x = (int) point[i * 2];
-                int y = (int) point[i * 2 + 1];
-                points.add(new int[]{x, y});
+            // 置信度
+            result.confidence = confidence;
+            int x = (int) output[0], y = (int) output[1], w = (int) output[2], h = (int) output[3];
+            // 检测框
+            result.box = new Box(new Point(x - w / 2, y - h / 2), x + w / 2, y + h / 2); // 原始数据的xy坐标是检测框的中心点，需要修改为左上角
+            // 类别
+            float plateScore = output[15];
+            float faceScore = output[16];
+            result.classId = plateScore > faceScore ? 0 : 1;
+            // 关键点
+            List<Point> pointList = new ArrayList<>(5);
+            for (int i = 5; i < 14; i += 2) {
+                pointList.add(new Point((int) output[i], (int) output[i + 1]));
             }
             if (result.classId == 0) {
                 result.plateVertexes = new Plate.Vertexes();
-                // 判断位置
-                List<int[]> vertexes = new ArrayList<>(points);
+                List<Point> vertexes = new ArrayList<>(pointList);
                 vertexes.remove(2); // 第3个关键点在车牌中无意义
-                vertexes.sort((p1, p2) -> Float.compare(p1[0], p2[0]));
-                result.plateVertexes.lt = vertexes.get(0)[1] < vertexes.get(1)[1] ? vertexes.get(0) : vertexes.get(1);
-                result.plateVertexes.rt = vertexes.get(2)[1] < vertexes.get(3)[1] ? vertexes.get(2) : vertexes.get(3);
-                result.plateVertexes.rb = vertexes.get(2)[1] >= vertexes.get(3)[1] ? vertexes.get(2) : vertexes.get(3);
-                result.plateVertexes.lb = vertexes.get(0)[1] >= vertexes.get(1)[1] ? vertexes.get(0) : vertexes.get(1);
+                // 排序后判断坐标方位
+                vertexes.sort((a, b) -> Float.compare(a.x, b.x));
+                result.plateVertexes.lt = vertexes.get(0).y < vertexes.get(1).y ? vertexes.get(0) : vertexes.get(1);
+                result.plateVertexes.rt = vertexes.get(2).y < vertexes.get(3).y ? vertexes.get(2) : vertexes.get(3);
+                result.plateVertexes.rb = vertexes.get(2).y >= vertexes.get(3).y ? vertexes.get(2) : vertexes.get(3);
+                result.plateVertexes.lb = vertexes.get(0).y >= vertexes.get(1).y ? vertexes.get(0) : vertexes.get(1);
             } else if (result.classId == 1) {
-                result.faceLandmarks = new Face.Landmarks();
-                // 存入坐标点
-                result.faceLandmarks.leftEye = points.get(0);
-                result.faceLandmarks.rightEye = points.get(1);
-                result.faceLandmarks.nose = points.get(2);
-                result.faceLandmarks.leftMouth = points.get(3);
-                result.faceLandmarks.rightMouth = points.get(4);
-                // 计算角度
-                result.faceAngles = new Face.Angles();
-                result.faceAngles.yaw = 0.0f;
-                result.faceAngles.pitch = 0.0f;
-                result.faceAngles.roll = 0.0f;
-                float eyeCenterX = (result.faceLandmarks.leftEye[0] + result.faceLandmarks.rightEye[0]) / 2.0f;
-                float eyeDistance = Math.abs(result.faceLandmarks.rightEye[0] - result.faceLandmarks.leftEye[0]);
-                float noseOffset = result.faceLandmarks.nose[0] - eyeCenterX;
-                if (eyeDistance > 0.0f) {
-                    result.faceAngles.yaw = Math.max(-1.0f, Math.min(1.0f, noseOffset / eyeDistance)) * 30.0f;
-                }
-                float eyeCenterY = (result.faceLandmarks.leftEye[1] + result.faceLandmarks.rightEye[1]) / 2.0f;
-                float mouthCenterY = (result.faceLandmarks.leftMouth[1] + result.faceLandmarks.rightMouth[1]) / 2.0f;
-                float noseDeviation = result.faceLandmarks.nose[1] - ((eyeCenterY + mouthCenterY) / 2.0f);
-                float faceHeight = Math.abs(mouthCenterY - eyeCenterY);
-                if (faceHeight > 0.0f) {
-                    result.faceAngles.pitch = Math.max(-1.0f, Math.min(1.0f, noseDeviation / faceHeight)) * 20.0f;
-                }
-                float eyeDx = result.faceLandmarks.rightEye[0] - result.faceLandmarks.leftEye[0];
-                float eyeDy = result.faceLandmarks.rightEye[1] - result.faceLandmarks.leftEye[1];
-                if (Math.abs(eyeDx) > 0.0f) {
-                    result.faceAngles.roll = (float) Math.toDegrees(Math.atan(eyeDy / eyeDx));
-                }
+                result.faceLandmarks = new Face.Landmarks(pointList.get(0), pointList.get(1), pointList.get(2), pointList.get(3), pointList.get(4));
+                result.faceAngles = calculateAngles(result.faceLandmarks);
             }
             results.add(result);
         }
+        // NMS
+        results.sort((a, b) -> Float.compare(b.confidence, a.confidence));
+        Set<Integer> nmsIndexSet = new HashSet<>();
+        for (int i = 0; i < results.size() - 1; i++) {
+            Box box1 = results.get(i).box;
+            for (int j = i + 1; j < results.size(); j++) {
+                Box box2 = results.get(j).box;
+                if (iou(box1, box2) >= IOU_THRESHOLD) {
+                    nmsIndexSet.add(j);
+                }
+            }
+        }
+        List<Integer> nmsIndexList = new ArrayList<>(nmsIndexSet);
+        nmsIndexList.sort((a, b) -> Integer.compare(b, a)); // 降序排列
+        for (int index : nmsIndexList) {
+            results.remove(index);
+        }
         return results;
+    }
+
+    // 计算交并比
+    private static float iou(Box box1, Box box2) {
+        int width = Math.max(0, box1.point.x < box2.point.x ? (box1.point.x + box1.width - box2.point.x) : (box2.point.x + box2.width - box1.point.x));
+        int height = Math.max(0, box1.point.y < box2.point.y ? (box1.point.y + box1.height - box2.point.y) : (box2.point.y + box2.height - box1.point.y));
+        int area1 = box1.width * box1.height;
+        int area2 = box2.width * box2.height;
+        int area = width * height;
+        int union = area1 + area2 - area;
+        if (union <= 0) {
+            return 0.0f;
+        }
+        return (float) area / union;
+    }
+
+    // 计算姿态
+    private static Face.Angles calculateAngles(Face.Landmarks landmarks) {
+        Face.Angles angles = new Face.Angles(0.0f, 0.0f, 0.0f);
+        float eyeCenterX = (landmarks.leftEye.x + landmarks.rightEye.x) / 2.0f;
+        float eyeDistance = Math.abs(landmarks.rightEye.x - landmarks.leftEye.x);
+        float noseOffset = landmarks.nose.x - eyeCenterX;
+        if (eyeDistance > 0.0f) {
+            angles.yaw = Math.max(-1.0f, Math.min(1.0f, noseOffset / eyeDistance)) * 30.0f;
+        }
+        float eyeCenterY = (landmarks.leftEye.y + landmarks.rightEye.y) / 2.0f;
+        float mouthCenterY = (landmarks.leftMouth.y + landmarks.rightMouth.y) / 2.0f;
+        float noseDeviation = landmarks.nose.y - ((eyeCenterY + mouthCenterY) / 2.0f);
+        float faceHeight = Math.abs(mouthCenterY - eyeCenterY);
+        if (faceHeight > 0.0f) {
+            angles.pitch = Math.max(-1.0f, Math.min(1.0f, noseDeviation / faceHeight)) * 20.0f;
+        }
+        float eyeDx = landmarks.rightEye.x - landmarks.leftEye.x;
+        float eyeDy = landmarks.rightEye.y - landmarks.leftEye.y;
+        if (Math.abs(eyeDx) > 0.0f) {
+            angles.roll = (float) Math.toDegrees(Math.atan(eyeDy / eyeDx));
+        }
+        return angles;
     }
 
 }

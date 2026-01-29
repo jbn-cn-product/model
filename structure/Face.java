@@ -1,5 +1,7 @@
 package com.example.model.structure;
 
+import com.example.model.structure.Common.Point;
+
 public class Face {
 
     // 姿态
@@ -17,13 +19,13 @@ public class Face {
 
     // 关键点
     public static class Landmarks {
-        public int[] leftEye;       // 左眼
-        public int[] rightEye;      // 右眼
-        public int[] nose;          // 鼻子
-        public int[] leftMouth;     // 左嘴角
-        public int[] rightMouth;    // 右嘴角
+        public Point leftEye;       // 左眼
+        public Point rightEye;      // 右眼
+        public Point nose;          // 鼻子
+        public Point leftMouth;     // 左嘴角
+        public Point rightMouth;    // 右嘴角
         public Landmarks() {}
-        public Landmarks(int[] leftEye, int[] rightEye, int[] nose, int[] leftMouth, int[] rightMouth) {
+        public Landmarks(Point leftEye, Point rightEye, Point nose, Point leftMouth, Point rightMouth) {
             this.leftEye = leftEye;
             this.rightEye = rightEye;
             this.nose = nose;

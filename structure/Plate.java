@@ -1,15 +1,17 @@
 package com.example.model.structure;
 
+import com.example.model.structure.Common.Point;
+
 public class Plate {
 
     // 顶点
     public static class Vertexes {
-        public int[] lt;    // 左上
-        public int[] rt;    // 右上
-        public int[] rb;    // 右下
-        public int[] lb;    // 左下
+        public Point lt;    // 左上
+        public Point rt;    // 右上
+        public Point rb;    // 右下
+        public Point lb;    // 左下
         public Vertexes() {}
-        public Vertexes(int[] lt, int[] rt, int[] rb, int[] lb) {
+        public Vertexes(Point lt, Point rt, Point rb, Point lb) {
             this.lt = lt;
             this.rt = rt;
             this.rb = rb;
