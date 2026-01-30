@@ -12,14 +12,15 @@ public class FaceRecognizer extends OnnxDeployer<FaceRecognizer.Result> {
 
     private static final String TAG = "MyLogcat-FaceRecognizer";
 
-    // 模型参数
+    // 模型配置
+    public static final String MODEL_NAME = "face_rec.onnx";
     public static final int MODEL_WIDTH = 112;
     public static final int MODEL_HEIGHT = 112;
     private static final float MEAN_VALUE = 0.5f;
     private static final float STD_VALUE = 0.5f;
 
     public FaceRecognizer(Logger logger, byte[] modelData) {
-        super(logger, modelData,  MODEL_WIDTH, MODEL_HEIGHT, MEAN_VALUE, STD_VALUE);
+        super(logger, new Model(modelData, MODEL_WIDTH, MODEL_HEIGHT, MEAN_VALUE, STD_VALUE));
     }
 
     // 运行

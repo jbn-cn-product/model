@@ -12,7 +12,8 @@ public class PlateRecognizer extends OnnxDeployer<PlateRecognizer.Result> {
 
     private static final String TAG = "MyLogcat-PlateRecognizer";
 
-    // 模型参数
+    // 模型配置
+    public static final String MODEL_NAME = "car_rec.onnx";
     public static final int MODEL_WIDTH = 168;
     public static final int MODEL_HEIGHT = 48;
     private static final float MEAN_VALUE = 0.588f;
@@ -23,7 +24,7 @@ public class PlateRecognizer extends OnnxDeployer<PlateRecognizer.Result> {
     private static final String NAME_LIST = "#京沪津渝冀晋蒙辽吉黑苏浙皖闽赣鲁豫鄂湘粤桂琼川贵云藏陕甘青宁新学警港澳挂使领民航危0123456789ABCDEFGHJKLMNPQRSTUVWXYZ险品";
 
     public PlateRecognizer(Logger logger, byte[] modelData) {
-        super(logger, modelData, MODEL_WIDTH, MODEL_HEIGHT, MEAN_VALUE, STD_VALUE);
+        super(logger, new Model(modelData, MODEL_WIDTH, MODEL_HEIGHT, MEAN_VALUE, STD_VALUE));
     }
 
     // 运行

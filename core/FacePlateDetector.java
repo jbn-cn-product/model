@@ -29,7 +29,8 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
 
     private static final String TAG = "MyLogcat-FacePlateDetector";
 
-    // 模型参数
+    // 模型配置
+    public static final String MODEL_NAME = "car_face_det.onnx";
     public static final int MODEL_WIDTH = 640;
     public static final int MODEL_HEIGHT = 640;
     private static final float CONF_THRESHOLD = 0.3f;   // 置信度阈值
@@ -38,7 +39,7 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
     private static final float STD_VALUE = 1.5f;
 
     public FacePlateDetector(Logger logger, byte[] modelData) {
-        super(logger, modelData, MODEL_WIDTH, MODEL_HEIGHT, MEAN_VALUE, STD_VALUE);
+        super(logger, new Model(modelData, MODEL_WIDTH, MODEL_HEIGHT, MEAN_VALUE, STD_VALUE));
     }
 
     // 运行

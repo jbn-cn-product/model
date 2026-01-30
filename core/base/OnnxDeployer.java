@@ -18,10 +18,28 @@ public abstract class OnnxDeployer<ResultType> implements AutoCloseable {
         void error(String TAG, String text);
     }
 
+    public static class Model {
+        public byte[] data;
+        public int width;
+        public int height;
+        public float meanValue;
+        public float stdValue;
+        public Model(byte[] data, int width, int height, float meanValue, float stdValue) {
+            this.data = data;
+            this.width = width;
+            this.height = height;
+            this.meanValue = meanValue;
+            this.stdValue = stdValue;
+        }
+    }
+
     private static final String TAG = "MyLogcat-OnnxDeployer";
 
     // 同步锁，避免推理时调用close
     private final Object lock = new Object();
+
+    // 模型配置
+    private final Model model;
 
     // 模型环境
     private final OrtEnvironment env;
@@ -32,35 +50,26 @@ public abstract class OnnxDeployer<ResultType> implements AutoCloseable {
     private final ByteBuffer inputByteBuffer;
     private final FloatBuffer inputFloatBuffer;
 
-    // 需要传入的参数
-    private final int modelWidth;
-    private final int modelHeight;
-    private final float meanValue;
-    private final float stdValue;
-
     // 接口
     protected Logger logger;
 
     // 需要实现的方法
     protected abstract ResultType postprocess(OrtSession.Result sessionResult);
 
-    protected OnnxDeployer(Logger logger, byte[] modelData, int modelWidth, int modelHeight, float meanValue, float stdValue) {
+    protected OnnxDeployer(Logger logger, Model model) {
         this.logger = logger;
-        this.modelWidth = modelWidth;
-        this.modelHeight = modelHeight;
-        this.meanValue = meanValue;
-        this.stdValue = stdValue;
+        this.model = model;
         // 申请native内存
-        int inputSize = 1 * 3 * modelHeight * modelWidth;
+        int inputSize = 1 * 3 * model.height * model.width;
         inputByteBuffer = ByteBuffer.allocateDirect(inputSize * 4);
         inputByteBuffer.order(ByteOrder.nativeOrder());
         inputFloatBuffer = inputByteBuffer.asFloatBuffer();
-        inputShape = new long[]{1, 3, modelHeight, modelWidth};
+        inputShape = new long[]{1, 3, model.height, model.width};
         // 创建模型环境
         env = OrtEnvironment.getEnvironment();
         OrtSession.SessionOptions sessionOptions = createSessionOptions();
         try {
-            session = env.createSession(modelData, sessionOptions);
+            session = env.createSession(model.data, sessionOptions);
         } catch (OrtException e) {
             logger.error(TAG, "Failed to initialize ONNX Runtime: " + e);
             throw new RuntimeException();
@@ -89,16 +98,16 @@ public abstract class OnnxDeployer<ResultType> implements AutoCloseable {
 
     // 归一化
     private float[] normalize(byte[] rgbData) {
-        int size = modelWidth * modelHeight;
+        int size = model.width * model.height;
         float[] inputData = new float[size * 3];
         for (int i = 0; i < size; i++) {
             int pixelIndex = i * 3;
             float r = (rgbData[pixelIndex] & 0xFF) / 255.0f;
             float g = (rgbData[pixelIndex + 1] & 0xFF) / 255.0f;
             float b = (rgbData[pixelIndex + 2] & 0xFF) / 255.0f;
-            inputData[i] = (r - meanValue) / stdValue;
-            inputData[i + size] = (g - meanValue) / stdValue;
-            inputData[i + 2 * size] = (b - meanValue) / stdValue;
+            inputData[i] = (r - model.meanValue) / model.stdValue;
+            inputData[i + size] = (g - model.meanValue) / model.stdValue;
+            inputData[i + 2 * size] = (b - model.meanValue) / model.stdValue;
         }
         return inputData;
     }
