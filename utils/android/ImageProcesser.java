@@ -48,6 +48,19 @@ public class ImageProcesser {
         return data;
     }
 
+    // RGB转Bitmap
+    public static Bitmap convertRGBToBitmap(byte[] rgbData, int width, int height) {
+        int[] pixels = new int[width * height];
+        int index = 0;
+        for (int i = 0; i < pixels.length; i++) {
+            int r = rgbData[index++] & 0xFF;
+            int g = rgbData[index++] & 0xFF;
+            int b = rgbData[index++] & 0xFF;
+            pixels[i] = Color.rgb(r, g, b);
+        }
+        return Bitmap.createBitmap(pixels, 0, width, width, height, Bitmap.Config.ARGB_8888);
+    }
+
     // 根据给定框裁减图像
     public static Bitmap cutBitmapByBox(Bitmap bitmap, Box box, int expandPixels) {
         // 各方向扩大指定像素
@@ -61,7 +74,7 @@ public class ImageProcesser {
         return Bitmap.createBitmap(bitmap, left, top, right - left, bottom - top);
     }
 
-    // 将检测结果绘制到图像上
+    // 将车脸模型检测结果绘制到图像上
     public static Bitmap drawDetectionsToBitmap(Bitmap bitmap, List<FacePlateDetector.Result> results) {
         Bitmap resultBitmap = bitmap.copy(Bitmap.Config.RGB_565, true);
         Canvas canvas = new Canvas(resultBitmap);
@@ -112,6 +125,20 @@ public class ImageProcesser {
             }
         }
         return resultBitmap;
+    }
+
+    // 旋转图像
+    public static Bitmap rotateBitmap(Bitmap source, int angle) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(angle);
+        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
+    }
+
+    // 释放图像资源
+    public static void recycleBitmap(Bitmap bitmap) {
+        if (bitmap != null && !bitmap.isRecycled()) {
+            bitmap.recycle();
+        }
     }
 
 }
