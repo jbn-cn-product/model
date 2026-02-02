@@ -6,7 +6,7 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.RectF;
-import com.example.model.core.FacePlateDetector;
+import com.example.model.core.detector.FacePlateDetector;
 import com.example.model.structure.Common.Box;
 import java.util.List;
 

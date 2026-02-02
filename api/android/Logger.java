@@ -1,7 +1,7 @@
 package com.example.model.api.android;
 
 import android.util.Log;
-import com.example.model.core.base.OnnxDeployer;
+import com.example.model.core.OnnxDeployer;
 
 public class Logger implements OnnxDeployer.Logger {
 

@@ -1,6 +1,6 @@
-package com.example.model.core;
+package com.example.model.core.detector;
 
-import com.example.model.core.base.OnnxDeployer;
+import com.example.model.core.OnnxDeployer;
 import com.example.model.structure.Common.Box;
 import com.example.model.structure.Common.Point;
 import com.example.model.structure.Face;

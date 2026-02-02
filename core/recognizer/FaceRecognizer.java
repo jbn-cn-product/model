@@ -1,6 +1,6 @@
-package com.example.model.core;
+package com.example.model.core.recognizer;
 
-import com.example.model.core.base.OnnxDeployer;
+import com.example.model.core.OnnxDeployer;
 import ai.onnxruntime.*;
 import java.nio.FloatBuffer;
 

@@ -1,4 +1,4 @@
-package com.example.model.core.base;
+package com.example.model.core;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
