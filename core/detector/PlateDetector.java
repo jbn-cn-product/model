@@ -22,7 +22,7 @@ public class PlateDetector extends OnnxDeployer<List<PlateDetector.Result>> {
     public static final String MODEL_NAME = "car_det.onnx";
     public static final int MODEL_WIDTH = 640;
     public static final int MODEL_HEIGHT = 640;
-    private static final float CONF_THRESHOLD = 0.3f;
+    private static final float CONF_THRESHOLD = 0.6f;
     private static final float IOU_THRESHOLD = 0.5f;
 
     public PlateDetector(Logger logger, byte[] modelData) {

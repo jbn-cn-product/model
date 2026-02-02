@@ -25,8 +25,8 @@ public class FaceDetector extends OnnxDeployer<List<FaceDetector.Result>> {
     public static final String MODEL_NAME = "face_det.onnx";
     public static final int MODEL_WIDTH = 640;
     public static final int MODEL_HEIGHT = 640;
-    private static final float CONF_THRESHOLD = 0.9f;
-    private static final float IOU_THRESHOLD = 0.7f;
+    private static final float CONF_THRESHOLD = 0.6f;
+    private static final float IOU_THRESHOLD = 0.5f;
 
     // RetinaFace参数
     private static final int[][] MIN_SIZES = {{16, 32}, {64, 128}, {256, 512}};

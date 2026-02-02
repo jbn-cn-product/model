@@ -30,8 +30,8 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
     public static final String MODEL_NAME = "car_face_det.onnx";
     public static final int MODEL_WIDTH = 640;
     public static final int MODEL_HEIGHT = 640;
-    private static final float CONF_THRESHOLD = 0.3f;   // 置信度阈值
-    private static final float IOU_THRESHOLD = 0.5f;    // 重合阈值
+    private static final float CONF_THRESHOLD = 0.6f;
+    private static final float IOU_THRESHOLD = 0.5f;
     private static final float MEAN_VALUE = 0.0f;
     private static final float STD_VALUE = 1.5f;
 
