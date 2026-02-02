@@ -97,7 +97,7 @@ public abstract class OnnxDeployer<ResultType> implements AutoCloseable {
     }
 
     // 归一化
-    private float[] normalize(byte[] rgbData) {
+    protected float[] normalize(byte[] rgbData) {
         int size = model.width * model.height;
         float[] inputData = new float[size * 3];
         for (int i = 0; i < size; i++) {

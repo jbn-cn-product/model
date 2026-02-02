@@ -17,13 +17,16 @@ public class ImageProcesser {
     // 缩放
     public static Bitmap resizeBitmap(Bitmap bitmap, int width, int height, boolean keepScale) {
         if (keepScale) {
-            // Bitmap自带的缩放方法处理的图像会变形，导致关键点错位，在右边或下方填充黑色区域以保持原始比例
-            Bitmap resizedBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+            // Bitmap自带的缩放方法处理的图像会变形，导致关键点扭曲，需要在周围填充以保持原始比例
+            Bitmap resizedBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             float scale = Math.min((float) width / bitmap.getWidth(), (float) height / bitmap.getHeight());
-            Canvas canvas = new Canvas(resizedBitmap);
+            float scaledWidth = bitmap.getWidth() * scale;
+            float scaledHeight = bitmap.getHeight() * scale;
             Matrix matrix = new Matrix();
             matrix.postScale(scale, scale);
-            matrix.postTranslate(0, 0);
+            matrix.postTranslate((width - scaledWidth) / 2f, (height - scaledHeight) / 2f); // 居中
+            Canvas canvas = new Canvas(resizedBitmap);
+            canvas.drawColor(Color.rgb(114, 114, 114)); // 填充为灰色，模型推理的标准做法
             canvas.drawBitmap(bitmap, matrix, null);
             return resizedBitmap;
         } else {

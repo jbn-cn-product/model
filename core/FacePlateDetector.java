@@ -1,18 +1,16 @@
 package com.example.model.core;
 
 import com.example.model.core.base.OnnxDeployer;
+import com.example.model.structure.Common;
 import com.example.model.structure.Common.Box;
 import com.example.model.structure.Common.Point;
 import com.example.model.structure.Face;
 import com.example.model.structure.Plate;
+import com.example.model.utils.DataHelper;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import ai.onnxruntime.OnnxTensor;
-import ai.onnxruntime.OrtException;
 import ai.onnxruntime.OrtSession;
 import ai.onnxruntime.TensorInfo;
 
@@ -62,9 +60,9 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
             TensorInfo tensorInfo = (TensorInfo) super.session.getOutputInfo().values().iterator().next().getInfo();
             buffer = tensor.getFloatBuffer();
             outputShape = tensorInfo.getShape();
-        } catch (OrtException e) {
+        } catch (Exception e) {
             logger.error(TAG, "update output tensor failed: " + e.getMessage());
-            return Collections.emptyList();
+            return null;
         }
         float[] outputArray = new float[buffer.remaining()];
         buffer.get(outputArray);
@@ -113,66 +111,18 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
                 result.plateVertexes.lb = vertexes.get(0).y >= vertexes.get(1).y ? vertexes.get(0) : vertexes.get(1);
             } else if (result.classId == 1) {
                 result.faceLandmarks = new Face.Landmarks(pointList.get(0), pointList.get(1), pointList.get(2), pointList.get(3), pointList.get(4));
-                result.faceAngles = calculateAngles(result.faceLandmarks);
+                result.faceAngles = DataHelper.calculateAngles(result.faceLandmarks);
             }
             results.add(result);
         }
         // NMS
         results.sort((a, b) -> Float.compare(b.confidence, a.confidence));
-        Set<Integer> nmsIndexSet = new HashSet<>();
-        for (int i = 0; i < results.size() - 1; i++) {
-            Box box1 = results.get(i).box;
-            for (int j = i + 1; j < results.size(); j++) {
-                Box box2 = results.get(j).box;
-                if (iou(box1, box2) >= IOU_THRESHOLD) {
-                    nmsIndexSet.add(j);
-                }
-            }
+        List<Common.Box> boxList = new ArrayList<>();
+        for (Result result : results) {
+            boxList.add(result.box);
         }
-        List<Integer> nmsIndexList = new ArrayList<>(nmsIndexSet);
-        nmsIndexList.sort((a, b) -> Integer.compare(b, a)); // 降序排列
-        for (int index : nmsIndexList) {
-            results.remove(index);
-        }
+        DataHelper.nms(results, boxList, IOU_THRESHOLD);
         return results;
-    }
-
-    // 计算交并比
-    private static float iou(Box box1, Box box2) {
-        int width = Math.max(0, box1.point.x < box2.point.x ? (box1.point.x + box1.width - box2.point.x) : (box2.point.x + box2.width - box1.point.x));
-        int height = Math.max(0, box1.point.y < box2.point.y ? (box1.point.y + box1.height - box2.point.y) : (box2.point.y + box2.height - box1.point.y));
-        int area1 = box1.width * box1.height;
-        int area2 = box2.width * box2.height;
-        int area = width * height;
-        int union = area1 + area2 - area;
-        if (union <= 0) {
-            return 0.0f;
-        }
-        return (float) area / union;
-    }
-
-    // 计算姿态
-    private static Face.Angles calculateAngles(Face.Landmarks landmarks) {
-        Face.Angles angles = new Face.Angles(0.0f, 0.0f, 0.0f);
-        float eyeCenterX = (landmarks.leftEye.x + landmarks.rightEye.x) / 2.0f;
-        float eyeDistance = Math.abs(landmarks.rightEye.x - landmarks.leftEye.x);
-        float noseOffset = landmarks.nose.x - eyeCenterX;
-        if (eyeDistance > 0.0f) {
-            angles.yaw = Math.max(-1.0f, Math.min(1.0f, noseOffset / eyeDistance)) * 30.0f;
-        }
-        float eyeCenterY = (landmarks.leftEye.y + landmarks.rightEye.y) / 2.0f;
-        float mouthCenterY = (landmarks.leftMouth.y + landmarks.rightMouth.y) / 2.0f;
-        float noseDeviation = landmarks.nose.y - ((eyeCenterY + mouthCenterY) / 2.0f);
-        float faceHeight = Math.abs(mouthCenterY - eyeCenterY);
-        if (faceHeight > 0.0f) {
-            angles.pitch = Math.max(-1.0f, Math.min(1.0f, noseDeviation / faceHeight)) * 20.0f;
-        }
-        float eyeDx = landmarks.rightEye.x - landmarks.leftEye.x;
-        float eyeDy = landmarks.rightEye.y - landmarks.leftEye.y;
-        if (Math.abs(eyeDx) > 0.0f) {
-            angles.roll = (float) Math.toDegrees(Math.atan(eyeDy / eyeDx));
-        }
-        return angles;
     }
 
 }
