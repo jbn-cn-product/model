@@ -1,6 +1,6 @@
 package com.example.model.utils;
 
-import com.example.model.structure.Common;
+import com.example.model.structure.Common.Box;
 import com.example.model.structure.Face;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
@@ -12,12 +12,12 @@ import java.util.Set;
 public class DataHelper {
 
     // 非极大值抑制
-    public static void nms(List<?> sortedList, List<Common.Box> boxList, float iouThreshold) {
+    public static void nms(List<?> sortedList, List<Box> boxList, float iouThreshold) {
         Set<Integer> nmsIndexSet = new HashSet<>();
         for (int i = 0; i < sortedList.size() - 1; i++) {
-            Common.Box box1 = boxList.get(i);
+            Box box1 = boxList.get(i);
             for (int j = i + 1; j < sortedList.size(); j++) {
-                Common.Box box2 = boxList.get(j);
+                Box box2 = boxList.get(j);
                 if (DataHelper.iou(box1, box2) >= iouThreshold) {
                     nmsIndexSet.add(j);
                 }
@@ -31,7 +31,7 @@ public class DataHelper {
     }
 
     // 计算交并比
-    public static float iou(Common.Box box1, Common.Box box2) {
+    public static float iou(Box box1, Box box2) {
         int width = Math.max(0, box1.point.x < box2.point.x ? (box1.point.x + box1.width - box2.point.x) : (box2.point.x + box2.width - box1.point.x));
         int height = Math.max(0, box1.point.y < box2.point.y ? (box1.point.y + box1.height - box2.point.y) : (box2.point.y + box2.height - box1.point.y));
         int area1 = box1.width * box1.height;

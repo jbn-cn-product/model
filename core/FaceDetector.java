@@ -1,7 +1,6 @@
 package com.example.model.core;
 
 import com.example.model.core.base.OnnxDeployer;
-import com.example.model.structure.Common;
 import com.example.model.structure.Common.Box;
 import com.example.model.structure.Common.Point;
 import com.example.model.structure.Face;
@@ -33,6 +32,9 @@ public class FaceDetector extends OnnxDeployer<List<FaceDetector.Result>> {
     private static final int[][] MIN_SIZES = {{16, 32}, {64, 128}, {256, 512}};
     private static final int[] STEPS = {8, 16, 32};
     private static final float[] VARIANCE = {0.1f, 0.2f};
+    private static final float MEAN_R = 123.0f;
+    private static final float MEAN_G = 117.0f;
+    private static final float MEAN_B = 104.0f;
     private final List<float[]> anchors = new ArrayList<>();
 
     public FaceDetector(Logger logger, byte[] modelData) {
@@ -53,6 +55,7 @@ public class FaceDetector extends OnnxDeployer<List<FaceDetector.Result>> {
         }
     }
 
+    // 运行
     public List<Result> run(byte[] rgbData) {
         long startTime = System.currentTimeMillis();
         List<Result> results = super.inference(rgbData);
@@ -72,9 +75,9 @@ public class FaceDetector extends OnnxDeployer<List<FaceDetector.Result>> {
             float r = rgbData[pixelIndex] & 0xFF;
             float g = rgbData[pixelIndex + 1] & 0xFF;
             float b = rgbData[pixelIndex + 2] & 0xFF;
-            inputData[i] = b - 104.0f;
-            inputData[i + size] = g - 117.0f;
-            inputData[i + 2 * size] = r - 123.0f;
+            inputData[i] = b - MEAN_B;
+            inputData[i + size] = g - MEAN_G;
+            inputData[i + 2 * size] = r - MEAN_R;
         }
         return inputData;
     }
@@ -106,41 +109,34 @@ public class FaceDetector extends OnnxDeployer<List<FaceDetector.Result>> {
             if (faceScore < CONF_THRESHOLD) {
                 continue;
             }
+            float ax = anchors.get(i)[0];
+            float ay = anchors.get(i)[1];
+            float aw = anchors.get(i)[2];
+            float ah = anchors.get(i)[3];
+            float cx = ax + aw * boxData[i * 4] * VARIANCE[0];
+            float cy = ay + ah * boxData[i * 4 + 1] * VARIANCE[0];
+            float w = aw * (float) Math.exp(boxData[i * 4 + 2] * VARIANCE[1]);
+            float h = ah * (float) Math.exp(boxData[i * 4 + 3] * VARIANCE[1]);
+            int offset = i * 10;
+            Point[] points = new Point[5];
+            for (int j = 0; j < 10; j += 2) {
+                float lx = (ax + landmarksData[offset + j] * VARIANCE[0] * aw) * MODEL_WIDTH;
+                float ly = (ay + landmarksData[offset + j + 1] * VARIANCE[0] * ah) * MODEL_HEIGHT;
+                points[j / 2] = new Point((int) lx, (int) ly);
+            }
+            int x1 = (int) ((cx - w / 2) * MODEL_WIDTH);
+            int y1 = (int) ((cy - h / 2) * MODEL_HEIGHT);
+            int x2 = (int) ((cx + w / 2) * MODEL_WIDTH);
+            int y2 = (int) ((cy + h / 2) * MODEL_HEIGHT);
             Result result = new Result();
             result.confidence = faceScore;
-            float[] anchor = anchors.get(i);
-            float cx = anchor[0] + boxData[i*4] * VARIANCE[0] * anchor[2];
-            float cy = anchor[1] + boxData[i*4+1] * VARIANCE[0] * anchor[3];
-            float w = anchor[2] * (float) Math.exp(boxData[i*4+2] * VARIANCE[1]);
-            float h = anchor[3] * (float) Math.exp(boxData[i*4+3] * VARIANCE[1]);
-            float lx1 = (anchor[0] + landmarksData[i*10 + 0] * VARIANCE[0] * anchor[2]) * MODEL_WIDTH;
-            float lx2 = (anchor[0] + landmarksData[i*10 + 2] * VARIANCE[0] * anchor[2]) * MODEL_WIDTH;
-            float lx3 = (anchor[0] + landmarksData[i*10 + 4] * VARIANCE[0] * anchor[2]) * MODEL_WIDTH;
-            float lx4 = (anchor[0] + landmarksData[i*10 + 6] * VARIANCE[0] * anchor[2]) * MODEL_WIDTH;
-            float lx5 = (anchor[0] + landmarksData[i*10 + 8] * VARIANCE[0] * anchor[2]) * MODEL_WIDTH;
-            float ly1 = (anchor[1] + landmarksData[i*10 + 1] * VARIANCE[0] * anchor[3]) * MODEL_HEIGHT;
-            float ly2 = (anchor[1] + landmarksData[i*10 + 3] * VARIANCE[0] * anchor[3]) * MODEL_HEIGHT;
-            float ly3 = (anchor[1] + landmarksData[i*10 + 5] * VARIANCE[0] * anchor[3]) * MODEL_HEIGHT;
-            float ly4 = (anchor[1] + landmarksData[i*10 + 7] * VARIANCE[0] * anchor[3]) * MODEL_HEIGHT;
-            float ly5 = (anchor[1] + landmarksData[i*10 + 9] * VARIANCE[0] * anchor[3]) * MODEL_HEIGHT;
-            int x1 = (int) ((cx - w/2) * MODEL_WIDTH);
-            int y1 = (int) ((cy - h/2) * MODEL_HEIGHT);
-            int x2 = (int) ((cx + w/2) * MODEL_WIDTH);
-            int y2 = (int) ((cy + h/2) * MODEL_HEIGHT);
             result.box = new Box(new Point(x1, y1), x2, y2);
-            result.faceLandmarks = new Face.Landmarks(
-                    new Point((int) lx1, (int) ly1),
-                    new Point((int) lx2, (int) ly2),
-                    new Point((int) lx3, (int) ly3),
-                    new Point((int) lx4, (int) ly4),
-                    new Point((int) lx5, (int) ly5)
-            );
+            result.faceLandmarks = new Face.Landmarks(points[0], points[1], points[2], points[3], points[4]);
             result.faceAngles = DataHelper.calculateAngles(result.faceLandmarks);
             results.add(result);
         }
-        // NMS
         results.sort((a, b) -> Float.compare(b.confidence, a.confidence));
-        List<Common.Box> boxList = new ArrayList<>();
+        List<Box> boxList = new ArrayList<>();
         for (Result result : results) {
             boxList.add(result.box);
         }

@@ -1,7 +1,6 @@
 package com.example.model.core;
 
 import com.example.model.core.base.OnnxDeployer;
-import com.example.model.structure.Common;
 import com.example.model.structure.Common.Box;
 import com.example.model.structure.Common.Point;
 import com.example.model.structure.Face;
@@ -117,7 +116,7 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
         }
         // NMS
         results.sort((a, b) -> Float.compare(b.confidence, a.confidence));
-        List<Common.Box> boxList = new ArrayList<>();
+        List<Box> boxList = new ArrayList<>();
         for (Result result : results) {
             boxList.add(result.box);
         }
