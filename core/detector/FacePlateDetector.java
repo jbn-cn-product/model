@@ -86,7 +86,7 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
             Result result = new Result();
             // 置信度
             result.confidence = confidence;
-            int x = (int) output[0], y = (int) output[1], w = (int) output[2], h = (int) output[3];
+            float x = output[0], y = output[1], w = output[2], h = output[3];
             // 检测框
             result.box = new Box(new Point(x - w / 2, y - h / 2), x + w / 2, y + h / 2); // 原始数据的xy坐标是检测框的中心点，需要修改为左上角
             // 类别
@@ -96,7 +96,7 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
             // 关键点
             List<Point> pointList = new ArrayList<>(5);
             for (int i = 5; i < 14; i += 2) {
-                pointList.add(new Point((int) output[i], (int) output[i + 1]));
+                pointList.add(new Point(output[i], output[i + 1]));
             }
             if (result.classId == 0) {
                 result.plateVertexes = new Plate.Vertexes();

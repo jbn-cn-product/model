@@ -79,7 +79,7 @@ public class PlateDetector extends OnnxDeployer<List<PlateDetector.Result>> {
             float y2 = cy + h / 2;
             Result result = new Result();
             result.confidence = maxScore;
-            result.box = new Box(new Point((int)x1, (int)y1), (int)x2, (int)y2);
+            result.box = new Box(new Point(x1, y1), x2, y2);
             results.add(result);
         }
         results.sort((a, b) -> Float.compare(b.confidence, a.confidence));

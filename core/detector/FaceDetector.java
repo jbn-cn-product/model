@@ -122,12 +122,12 @@ public class FaceDetector extends OnnxDeployer<List<FaceDetector.Result>> {
             for (int j = 0; j < 10; j += 2) {
                 float lx = (ax + landmarksData[offset + j] * VARIANCE[0] * aw) * MODEL_WIDTH;
                 float ly = (ay + landmarksData[offset + j + 1] * VARIANCE[0] * ah) * MODEL_HEIGHT;
-                points[j / 2] = new Point((int) lx, (int) ly);
+                points[j / 2] = new Point(lx, ly);
             }
-            int x1 = (int) ((cx - w / 2) * MODEL_WIDTH);
-            int y1 = (int) ((cy - h / 2) * MODEL_HEIGHT);
-            int x2 = (int) ((cx + w / 2) * MODEL_WIDTH);
-            int y2 = (int) ((cy + h / 2) * MODEL_HEIGHT);
+            float x1 = (cx - w / 2) * MODEL_WIDTH;
+            float y1 = (cy - h / 2) * MODEL_HEIGHT;
+            float x2 = (cx + w / 2) * MODEL_WIDTH;
+            float y2 = (cy + h / 2) * MODEL_HEIGHT;
             Result result = new Result();
             result.confidence = faceScore;
             result.box = new Box(new Point(x1, y1), x2, y2);

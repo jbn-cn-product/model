@@ -32,16 +32,16 @@ public class DataHelper {
 
     // 计算交并比
     public static float iou(Box box1, Box box2) {
-        int width = Math.max(0, box1.point.x < box2.point.x ? (box1.point.x + box1.width - box2.point.x) : (box2.point.x + box2.width - box1.point.x));
-        int height = Math.max(0, box1.point.y < box2.point.y ? (box1.point.y + box1.height - box2.point.y) : (box2.point.y + box2.height - box1.point.y));
-        int area1 = box1.width * box1.height;
-        int area2 = box2.width * box2.height;
-        int area = width * height;
-        int union = area1 + area2 - area;
+        float width = Math.max(0, box1.point.x < box2.point.x ? (box1.point.x + box1.width - box2.point.x) : (box2.point.x + box2.width - box1.point.x));
+        float height = Math.max(0, box1.point.y < box2.point.y ? (box1.point.y + box1.height - box2.point.y) : (box2.point.y + box2.height - box1.point.y));
+        float area1 = box1.width * box1.height;
+        float area2 = box2.width * box2.height;
+        float area = width * height;
+        float union = area1 + area2 - area;
         if (union <= 0) {
             return 0.0f;
         }
-        return (float) area / union;
+        return area / union;
     }
 
     // 计算姿态

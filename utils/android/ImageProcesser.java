@@ -67,10 +67,10 @@ public class ImageProcesser {
     // 根据给定框裁减图像
     public static Bitmap cutBitmapByBox(Bitmap bitmap, Box box, int expandPixels) {
         // 各方向扩大指定像素
-        int left = Math.max(0, box.point.x - expandPixels);
-        int top = Math.max(0, box.point.y - expandPixels);
-        int right = Math.min(bitmap.getWidth(), box.width + expandPixels);
-        int bottom = Math.min(bitmap.getHeight(), box.height + expandPixels);
+        int left = Math.max(0, (int) box.point.x - expandPixels);
+        int top = Math.max(0, (int) box.point.y - expandPixels);
+        int right = Math.min(bitmap.getWidth(), (int) box.width + expandPixels);
+        int bottom = Math.min(bitmap.getHeight(), (int) box.height + expandPixels);
         if (right <= left || bottom <= top) {
             return bitmap;
         }
