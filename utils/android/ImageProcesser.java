@@ -25,7 +25,7 @@ public class ImageProcesser {
         float scale = Math.min((float) targetWidth / srcWidth, (float) targetHeight / srcHeight); // 获取相对更小的那一个缩放倍率
         Matrix matrix = new Matrix();
         matrix.postScale(scale, scale);
-        matrix.postTranslate((targetWidth - srcWidth * scale) / 2f, (targetHeight - srcHeight * scale) / 2f);
+        matrix.postTranslate((targetWidth - srcWidth * scale) / 2.0f, (targetHeight - srcHeight * scale) / 2.0f);
         Bitmap targetBitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(targetBitmap);
         canvas.drawColor(Color.rgb(114, 114, 114)); // 填充为灰色，模型推理的标准做法
@@ -63,19 +63,6 @@ public class ImageProcesser {
         return Bitmap.createBitmap(pixels, 0, width, width, height, Bitmap.Config.ARGB_8888);
     }
 
-    // 根据给定框裁减图像
-    public static Bitmap cutBitmapByBox(Bitmap bitmap, Box box, int expandPixels) {
-        // 各方向扩大指定像素
-        int left = Math.max(0, (int) box.point.x - expandPixels);
-        int top = Math.max(0, (int) box.point.y - expandPixels);
-        int right = Math.min(bitmap.getWidth(), (int) box.width + expandPixels);
-        int bottom = Math.min(bitmap.getHeight(), (int) box.height + expandPixels);
-        if (right <= left || bottom <= top) {
-            return bitmap;
-        }
-        return Bitmap.createBitmap(bitmap, left, top, right - left, bottom - top);
-    }
-
     // 将车脸模型检测结果绘制到图像上
     public static Bitmap drawDetectionsToBitmap(Bitmap bitmap, List<FacePlateDetector.Result> results) {
         Bitmap resultBitmap = bitmap.copy(Bitmap.Config.RGB_565, true);
@@ -100,7 +87,7 @@ public class ImageProcesser {
         for (FacePlateDetector.Result result : results) {
             // 绘制边界框
             Box box = result.box;
-            RectF boxRectF = new RectF(box.point.x, box.point.y, box.width, box.height);
+            RectF boxRectF = new RectF(box.point.x, box.point.y, box.point.x + box.width, box.point.y + box.height);
             canvas.drawRect(boxRectF, boxPaint);
             // 绘制文本
             String label = String.format("%.2f", result.confidence);

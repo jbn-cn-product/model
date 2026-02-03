@@ -88,7 +88,7 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
             result.confidence = confidence;
             float x = output[0], y = output[1], w = output[2], h = output[3];
             // 检测框
-            result.box = new Box(new Point(x - w / 2, y - h / 2), x + w / 2, y + h / 2); // 原始数据的xy坐标是检测框的中心点，需要修改为左上角
+            result.box = new Box(new Point(x - w / 2, y - h / 2), w, h); // 原始数据的xy坐标是检测框的中心点，需要修正为左上角
             // 类别
             float plateScore = output[15];
             float faceScore = output[16];

@@ -1,5 +1,6 @@
 package com.example.model.utils;
 
+import com.example.model.core.detector.FacePlateDetector;
 import com.example.model.structure.Common.Box;
 import com.example.model.structure.Face;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -10,6 +11,8 @@ import java.util.List;
 import java.util.Set;
 
 public class DataHelper {
+
+    private static final String TAG = "MyLogcat-DataHelper";
 
     // 非极大值抑制
     public static void nms(List<?> sortedList, List<Box> boxList, float iouThreshold) {
@@ -183,6 +186,40 @@ public class DataHelper {
         }
         double mean = sum / validPixelCount;
         return (sumSq / validPixelCount) - (mean * mean);
+    }
+
+    // 将模型输出坐标还原到原图尺寸上
+    public static void restoreResultCoordinates(List<FacePlateDetector.Result> results, int imageWidth, int imageHeight, int modelWidth, int modelHeight) {
+        float scale = Math.min((float) modelWidth / imageWidth, (float) modelHeight / imageHeight);
+        float offsetX = (modelWidth - imageWidth * scale) / 2.0f;
+        float offsetY = (modelHeight - imageHeight * scale) / 2.0f;
+        for (FacePlateDetector.Result result : results) {
+            result.box.point.x = (result.box.point.x - offsetX) / scale;
+            result.box.point.y = (result.box.point.y - offsetY) / scale;
+            result.box.width = result.box.width / scale;
+            result.box.height = result.box.height / scale;
+            if (result.classId == 0) {
+                result.plateVertexes.lt.x = (result.plateVertexes.lt.x - offsetX) / scale;
+                result.plateVertexes.lt.y = (result.plateVertexes.lt.y - offsetY) / scale;
+                result.plateVertexes.rt.x = (result.plateVertexes.rt.x - offsetX) / scale;
+                result.plateVertexes.rt.y = (result.plateVertexes.rt.y - offsetY) / scale;
+                result.plateVertexes.rb.x = (result.plateVertexes.rb.x - offsetX) / scale;
+                result.plateVertexes.rb.y = (result.plateVertexes.rb.y - offsetY) / scale;
+                result.plateVertexes.lb.x = (result.plateVertexes.lb.x - offsetX) / scale;
+                result.plateVertexes.lb.y = (result.plateVertexes.lb.y - offsetY) / scale;
+            } else if (result.classId == 1) {
+                result.faceLandmarks.leftEye.x = (result.faceLandmarks.leftEye.x - offsetX) / scale;
+                result.faceLandmarks.leftEye.y = (result.faceLandmarks.leftEye.y - offsetY) / scale;
+                result.faceLandmarks.rightEye.x = (result.faceLandmarks.rightEye.x - offsetX) / scale;
+                result.faceLandmarks.rightEye.y = (result.faceLandmarks.rightEye.y - offsetY) / scale;
+                result.faceLandmarks.nose.x = (result.faceLandmarks.nose.x - offsetX) / scale;
+                result.faceLandmarks.nose.y = (result.faceLandmarks.nose.y - offsetY) / scale;
+                result.faceLandmarks.leftMouth.x = (result.faceLandmarks.leftMouth.x - offsetX) / scale;
+                result.faceLandmarks.leftMouth.y = (result.faceLandmarks.leftMouth.y - offsetY) / scale;
+                result.faceLandmarks.rightMouth.x = (result.faceLandmarks.rightMouth.x - offsetX) / scale;
+                result.faceLandmarks.rightMouth.y = (result.faceLandmarks.rightMouth.y - offsetY) / scale;
+            }
+        }
     }
 
 }
