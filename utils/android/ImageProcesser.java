@@ -15,23 +15,22 @@ public class ImageProcesser {
     private static final String TAG = "MyLogcat-ImageProcesser";
 
     // 缩放
-    public static Bitmap resizeBitmap(Bitmap bitmap, int width, int height, boolean keepScale) {
-        if (keepScale) {
-            // Bitmap自带的缩放方法处理的图像会变形，导致关键点扭曲，需要在周围填充以保持原始比例
-            Bitmap resizedBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-            float scale = Math.min((float) width / bitmap.getWidth(), (float) height / bitmap.getHeight());
-            float scaledWidth = bitmap.getWidth() * scale;
-            float scaledHeight = bitmap.getHeight() * scale;
-            Matrix matrix = new Matrix();
-            matrix.postScale(scale, scale);
-            matrix.postTranslate((width - scaledWidth) / 2f, (height - scaledHeight) / 2f); // 居中
-            Canvas canvas = new Canvas(resizedBitmap);
-            canvas.drawColor(Color.rgb(114, 114, 114)); // 填充为灰色，模型推理的标准做法
-            canvas.drawBitmap(bitmap, matrix, null);
-            return resizedBitmap;
-        } else {
-            return Bitmap.createScaledBitmap(bitmap, width, height, true);
+    public static Bitmap resizeBitmap(Bitmap srcBitmap, int targetWidth, int targetHeight, boolean keepScale) {
+        int srcWidth = srcBitmap.getWidth();
+        int srcHeight = srcBitmap.getHeight();
+        // 不需要保持比例，或者两者比例本就相等，直接复制原图返回
+        if (!keepScale || Math.abs(((float) srcWidth / srcHeight) - ((float) targetWidth / targetHeight)) < 1e-5f) {
+            return Bitmap.createScaledBitmap(srcBitmap, targetWidth, targetHeight, true);
         }
+        float scale = Math.min((float) targetWidth / srcWidth, (float) targetHeight / srcHeight); // 获取相对更小的那一个缩放倍率
+        Matrix matrix = new Matrix();
+        matrix.postScale(scale, scale);
+        matrix.postTranslate((targetWidth - srcWidth * scale) / 2f, (targetHeight - srcHeight * scale) / 2f);
+        Bitmap targetBitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(targetBitmap);
+        canvas.drawColor(Color.rgb(114, 114, 114)); // 填充为灰色，模型推理的标准做法
+        canvas.drawBitmap(srcBitmap, matrix, null);
+        return targetBitmap;
     }
 
     // Bitmap转RGB
