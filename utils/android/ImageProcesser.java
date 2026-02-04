@@ -4,11 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.Paint;
-import android.graphics.RectF;
-import com.example.model.core.detector.FacePlateDetector;
 import com.example.model.structure.Common.Box;
-import java.util.List;
 
 public class ImageProcesser {
 
@@ -63,64 +59,28 @@ public class ImageProcesser {
         return Bitmap.createBitmap(pixels, 0, width, width, height, Bitmap.Config.ARGB_8888);
     }
 
-    // 将车脸模型检测结果绘制到图像上
-    public static Bitmap drawDetectionsToBitmap(Bitmap bitmap, List<FacePlateDetector.Result> results) {
-        Bitmap resultBitmap = bitmap.copy(Bitmap.Config.RGB_565, true);
-        Canvas canvas = new Canvas(resultBitmap);
-        // 配置边界框
-        Paint boxPaint = new Paint();
-        boxPaint.setStyle(Paint.Style.STROKE);
-        boxPaint.setStrokeWidth(3f);
-        boxPaint.setColor(Color.GREEN);
-        // 配置文本
-        Paint textBgPaint = new Paint();
-        textBgPaint.setColor(Color.BLACK);
-        textBgPaint.setAlpha(128);
-        Paint textPaint = new Paint();
-        textPaint.setColor(Color.WHITE);
-        textPaint.setTextSize(24f);
-        textPaint.setFakeBoldText(true);
-        // 配置关键点
-        Paint pointPaint = new Paint();
-        pointPaint.setColor(Color.RED);
-        pointPaint.setStrokeWidth(5f);
-        for (FacePlateDetector.Result result : results) {
-            // 绘制边界框
-            Box box = result.box;
-            RectF boxRectF = new RectF(box.point.x, box.point.y, box.point.x + box.width, box.point.y + box.height);
-            canvas.drawRect(boxRectF, boxPaint);
-            // 绘制文本
-            String label = String.format("%.2f", result.confidence);
-            RectF textBg = new RectF(
-                    boxRectF.left,
-                    boxRectF.top - textPaint.getTextSize() - 10,
-                    boxRectF.left + textPaint.measureText(label) + 10,
-                    boxRectF.top
-            );
-            canvas.drawRect(textBg, textBgPaint);
-            canvas.drawText(label, boxRectF.left + 5, boxRectF.top - 5, textPaint);
-            // 绘制关键点
-            if (result.classId == 0) {
-                canvas.drawPoint(result.plateVertexes.lt.x, result.plateVertexes.lt.y, pointPaint);
-                canvas.drawPoint(result.plateVertexes.rt.x, result.plateVertexes.rt.y, pointPaint);
-                canvas.drawPoint(result.plateVertexes.rb.x, result.plateVertexes.rb.y, pointPaint);
-                canvas.drawPoint(result.plateVertexes.lb.x, result.plateVertexes.lb.y, pointPaint);
-            } else if (result.classId == 1) {
-                canvas.drawPoint(result.faceLandmarks.leftEye.x, result.faceLandmarks.leftEye.y, pointPaint);
-                canvas.drawPoint(result.faceLandmarks.rightEye.x, result.faceLandmarks.rightEye.y, pointPaint);
-                canvas.drawPoint(result.faceLandmarks.nose.x, result.faceLandmarks.nose.y, pointPaint);
-                canvas.drawPoint(result.faceLandmarks.leftMouth.x, result.faceLandmarks.leftMouth.y, pointPaint);
-                canvas.drawPoint(result.faceLandmarks.rightMouth.x, result.faceLandmarks.rightMouth.y, pointPaint);
-            }
-        }
-        return resultBitmap;
-    }
-
     // 旋转图像
     public static Bitmap rotateBitmap(Bitmap source, int angle) {
         Matrix matrix = new Matrix();
         matrix.postRotate(angle);
         return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
+    }
+
+    // 裁切图像
+    public static Bitmap cutBitmap(Bitmap bitmap, Box box) {
+        int bitmapWidth = bitmap.getWidth();
+        int bitmapHeight = bitmap.getHeight();
+        int x = (int) box.point.x;
+        int y = (int) box.point.y;
+        int w = (int) box.width;
+        if (x + w > bitmapWidth) {
+            w = bitmapWidth - x;
+        }
+        int h = (int) box.height;
+        if (y + h > bitmapHeight) {
+            h = bitmapHeight - y;
+        }
+        return Bitmap.createBitmap(bitmap, x, y, w, h);
     }
 
     // 释放图像资源
