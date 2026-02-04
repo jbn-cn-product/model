@@ -124,13 +124,9 @@ public class FaceDetector extends OnnxDeployer<List<FaceDetector.Result>> {
                 float ly = (ay + landmarksData[offset + j + 1] * VARIANCE[0] * ah) * MODEL_HEIGHT;
                 points[j / 2] = new Point(lx, ly);
             }
-            float x1 = (cx - w / 2) * MODEL_WIDTH;
-            float y1 = (cy - h / 2) * MODEL_HEIGHT;
-            float x2 = (cx + w / 2) * MODEL_WIDTH;
-            float y2 = (cy + h / 2) * MODEL_HEIGHT;
             Result result = new Result();
             result.confidence = faceScore;
-            result.box = new Box(new Point(x1, y1), x2, y2);
+            result.box = new Box(new Point((cx - w / 2) * MODEL_WIDTH, (cy - h / 2) * MODEL_HEIGHT), w * MODEL_WIDTH, h * MODEL_HEIGHT);
             result.faceLandmarks = new Face.Landmarks(points[0], points[1], points[2], points[3], points[4]);
             result.faceAngles = DataHelper.calculateAngles(result.faceLandmarks);
             results.add(result);
