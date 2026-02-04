@@ -4,7 +4,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
-import com.example.model.structure.Common.Box;
 
 public class ImageProcesser {
 
@@ -64,23 +63,6 @@ public class ImageProcesser {
         Matrix matrix = new Matrix();
         matrix.postRotate(angle);
         return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
-    }
-
-    // 裁切图像
-    public static Bitmap cutBitmap(Bitmap bitmap, Box box) {
-        int bitmapWidth = bitmap.getWidth();
-        int bitmapHeight = bitmap.getHeight();
-        int x = (int) box.point.x;
-        int y = (int) box.point.y;
-        int w = (int) box.width;
-        if (x + w > bitmapWidth) {
-            w = bitmapWidth - x;
-        }
-        int h = (int) box.height;
-        if (y + h > bitmapHeight) {
-            h = bitmapHeight - y;
-        }
-        return Bitmap.createBitmap(bitmap, x, y, w, h);
     }
 
     // 释放图像资源
