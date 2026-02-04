@@ -34,7 +34,7 @@ public class PlateDetector extends OnnxDeployer<List<PlateDetector.Result>> {
         long startTime = System.currentTimeMillis();
         List<Result> results = super.inference(rgbData);
         if (!results.isEmpty()) {
-            logger.debug(TAG, String.format("run detection in %d ms, %d plates", System.currentTimeMillis() - startTime, results.size()));
+            logger.debug(TAG, String.format("检测到%d张车牌, 用时%dms", results.size(), System.currentTimeMillis() - startTime));
         }
         return results;
     }

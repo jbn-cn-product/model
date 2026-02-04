@@ -1,7 +1,6 @@
 package com.example.model.utils;
 
 import com.example.model.structure.Common.Box;
-import com.example.model.structure.Common.Point;
 import com.example.model.structure.Face;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
@@ -188,8 +187,16 @@ public class DataHelper {
         return (sumSq / validPixelCount) - (mean * mean);
     }
 
+    // 判断裁切框是否超出范围
+    public static boolean isBoxOutOfImage(Box box, int originalWidth, int originalHeight) {
+        return (box.point.x < 0 || box.point.y < 0 ||
+                box.point.x + box.width > originalWidth ||
+                box.point.y + box.height > originalHeight
+        );
+    }
+
     // 将模型输出坐标还原到原图尺寸上
-    public static void restoreResultCoordinates(int imageWidth, int imageHeight, int modelWidth, int modelHeight, Box box, List<Point> points) {
+    public static void restoreResultCoordinates(int imageWidth, int imageHeight, int modelWidth, int modelHeight, Box box, Face.Landmarks landmarks) {
         float scale = Math.min((float) modelWidth / imageWidth, (float) modelHeight / imageHeight);
         float offsetX = (modelWidth - imageWidth * scale) / 2.0f;
         float offsetY = (modelHeight - imageHeight * scale) / 2.0f;
@@ -197,9 +204,17 @@ public class DataHelper {
         box.point.y = (box.point.y - offsetY) / scale;
         box.width = box.width / scale;
         box.height = box.height / scale;
-        for (Point point : points) {
-            point.x = (point.x - offsetX) / scale;
-            point.y = (point.y - offsetY) / scale;
+        if (landmarks != null) {
+            landmarks.leftEye.x = (landmarks.leftEye.x - offsetX) / scale;
+            landmarks.leftEye.y = (landmarks.leftEye.y - offsetY) / scale;
+            landmarks.rightEye.x = (landmarks.rightEye.x - offsetX) / scale;
+            landmarks.rightEye.y = (landmarks.rightEye.y - offsetY) / scale;
+            landmarks.nose.x = (landmarks.nose.x - offsetX) / scale;
+            landmarks.nose.y = (landmarks.nose.y - offsetY) / scale;
+            landmarks.leftMouth.x = (landmarks.leftMouth.x - offsetX) / scale;
+            landmarks.leftMouth.y = (landmarks.leftMouth.y - offsetY) / scale;
+            landmarks.rightMouth.x = (landmarks.rightMouth.x - offsetX) / scale;
+            landmarks.rightMouth.y = (landmarks.rightMouth.y - offsetY) / scale;
         }
     }
 

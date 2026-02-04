@@ -29,9 +29,10 @@ public class PlateRecognizer extends OnnxDeployer<PlateRecognizer.Result> {
 
     // 运行
     public String run(byte[] rgbData) {
+        long startTime = System.currentTimeMillis();
         Result result = super.inference(rgbData);
         String number = result.number;
-        logger.info(TAG, "plate number recognized: " + number);
+        logger.debug(TAG, String.format("车牌号识别结果: %s, 用时%dms", number, System.currentTimeMillis() - startTime));
         return number;
     }
 
