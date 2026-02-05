@@ -37,7 +37,7 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
     private static final float STD_VALUE = 1.5f;
 
     public FacePlateDetector(Logger logger, byte[] modelData) {
-        super(logger, new Model(modelData, MODEL_WIDTH, MODEL_HEIGHT, MEAN_VALUE, STD_VALUE));
+        super(logger, new ModelConfig(modelData, MODEL_WIDTH, MODEL_HEIGHT, MEAN_VALUE, STD_VALUE));
     }
 
     // 运行

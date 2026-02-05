@@ -18,18 +18,26 @@ public abstract class OnnxDeployer<ResultType> implements AutoCloseable {
         void error(String TAG, String text);
     }
 
-    public static class Model {
-        public byte[] data;
-        public int width;
-        public int height;
-        public float meanValue;
-        public float stdValue;
-        public Model(byte[] data, int width, int height, float meanValue, float stdValue) {
+    public static class ModelConfig {
+        private record StdConfig (float mean, float std) {}
+        private record RetinaFaceConfig (float mean_r, float mean_g, float mean_b) {}
+        private byte[] data;
+        private int width;
+        private int height;
+        private StdConfig stdConfig;
+        private RetinaFaceConfig rfConfig;
+        private void init(byte[] data, int width, int height) {
             this.data = data;
             this.width = width;
             this.height = height;
-            this.meanValue = meanValue;
-            this.stdValue = stdValue;
+        }
+        public ModelConfig(byte[] data, int width, int height, float mean, float std) {
+            init(data, width, height);
+            this.stdConfig = new StdConfig(mean, std);
+        }
+        public ModelConfig(byte[] data, int width, int height, float mean_r, float mean_g, float mean_b) {
+            init(data, width, height);
+            this.rfConfig = new RetinaFaceConfig(mean_r, mean_g, mean_b);
         }
     }
 
@@ -39,7 +47,7 @@ public abstract class OnnxDeployer<ResultType> implements AutoCloseable {
     private final Object lock = new Object();
 
     // 模型配置
-    private final Model model;
+    private final ModelConfig modelConfig;
 
     // 模型环境
     private final OrtEnvironment env;
@@ -50,26 +58,26 @@ public abstract class OnnxDeployer<ResultType> implements AutoCloseable {
     private final ByteBuffer inputByteBuffer;
     private final FloatBuffer inputFloatBuffer;
 
-    // 接口
+    // 日志接口
     protected Logger logger;
 
     // 需要实现的方法
     protected abstract ResultType postprocess(OrtSession.Result sessionResult) throws OrtException;
 
-    protected OnnxDeployer(Logger logger, Model model) {
+    protected OnnxDeployer(Logger logger, ModelConfig modelConfig) {
         this.logger = logger;
-        this.model = model;
+        this.modelConfig = modelConfig;
         // 申请native内存
-        int inputSize = 1 * 3 * model.height * model.width;
+        int inputSize = 1 * 3 * modelConfig.height * modelConfig.width;
         inputByteBuffer = ByteBuffer.allocateDirect(inputSize * 4);
         inputByteBuffer.order(ByteOrder.nativeOrder());
         inputFloatBuffer = inputByteBuffer.asFloatBuffer();
-        inputShape = new long[]{1, 3, model.height, model.width};
+        inputShape = new long[]{1, 3, modelConfig.height, modelConfig.width};
         // 创建模型环境
         env = OrtEnvironment.getEnvironment();
         OrtSession.SessionOptions sessionOptions = createSessionOptions();
         try {
-            session = env.createSession(model.data, sessionOptions);
+            session = env.createSession(modelConfig.data, sessionOptions);
         } catch (OrtException e) {
             logger.error(TAG, "初始化onnx runtime环境失败: " + e);
             throw new RuntimeException();
@@ -97,17 +105,23 @@ public abstract class OnnxDeployer<ResultType> implements AutoCloseable {
     }
 
     // 归一化
-    protected float[] normalize(byte[] rgbData) {
-        int size = model.width * model.height;
+    private float[] normalize(byte[] rgbData) {
+        int size = modelConfig.width * modelConfig.height;
         float[] inputData = new float[size * 3];
         for (int i = 0; i < size; i++) {
             int pixelIndex = i * 3;
-            float r = (rgbData[pixelIndex] & 0xFF) / 255.0f;
-            float g = (rgbData[pixelIndex + 1] & 0xFF) / 255.0f;
-            float b = (rgbData[pixelIndex + 2] & 0xFF) / 255.0f;
-            inputData[i] = (r - model.meanValue) / model.stdValue;
-            inputData[i + size] = (g - model.meanValue) / model.stdValue;
-            inputData[i + 2 * size] = (b - model.meanValue) / model.stdValue;
+            float r = rgbData[pixelIndex] & 0xFF;
+            float g = rgbData[pixelIndex + 1] & 0xFF;
+            float b = rgbData[pixelIndex + 2] & 0xFF;
+            if (modelConfig.stdConfig != null) {
+                inputData[i] = (r / 255.0f - modelConfig.stdConfig.mean) / modelConfig.stdConfig.std;
+                inputData[i + size] = (g / 255.0f - modelConfig.stdConfig.mean) / modelConfig.stdConfig.std;
+                inputData[i + size * 2] = (b / 255.0f - modelConfig.stdConfig.mean) / modelConfig.stdConfig.std;
+            } else {
+                inputData[i] = b - modelConfig.rfConfig.mean_b;
+                inputData[i + size] = g - modelConfig.rfConfig.mean_g;
+                inputData[i + size * 2] = r - modelConfig.rfConfig.mean_r;
+            }
         }
         return inputData;
     }

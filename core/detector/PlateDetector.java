@@ -25,9 +25,11 @@ public class PlateDetector extends OnnxDeployer<List<PlateDetector.Result>> {
     public static final int MODEL_HEIGHT = 640;
     private static final float CONF_THRESHOLD = 0.6f;
     private static final float IOU_THRESHOLD = 0.5f;
+    private static final float MEAN_VALUE = 0.5f;
+    private static final float STD_VALUE = 0.5f;
 
     public PlateDetector(Logger logger, byte[] modelData) {
-        super(logger, new Model(modelData, MODEL_WIDTH, MODEL_HEIGHT, 0.5f, 0.5f));
+        super(logger, new ModelConfig(modelData, MODEL_WIDTH, MODEL_HEIGHT, MEAN_VALUE, STD_VALUE));
     }
 
     // 运行

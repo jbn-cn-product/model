@@ -20,7 +20,7 @@ public class FaceRecognizer extends OnnxDeployer<FaceRecognizer.Result> {
     private static final float STD_VALUE = 0.5f;
 
     public FaceRecognizer(Logger logger, byte[] modelData) {
-        super(logger, new Model(modelData, MODEL_WIDTH, MODEL_HEIGHT, MEAN_VALUE, STD_VALUE));
+        super(logger, new ModelConfig(modelData, MODEL_WIDTH, MODEL_HEIGHT, MEAN_VALUE, STD_VALUE));
     }
 
     // 运行

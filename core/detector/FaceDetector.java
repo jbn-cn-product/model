@@ -28,18 +28,18 @@ public class FaceDetector extends OnnxDeployer<List<FaceDetector.Result>> {
     public static final int MODEL_HEIGHT = 640;
     private static final float CONF_THRESHOLD = 0.6f;
     private static final float IOU_THRESHOLD = 0.5f;
+    private static final float MEAN_R = 123.0f;
+    private static final float MEAN_G = 117.0f;
+    private static final float MEAN_B = 104.0f;
 
     // RetinaFace参数
     private static final int[][] MIN_SIZES = {{16, 32}, {64, 128}, {256, 512}};
     private static final int[] STEPS = {8, 16, 32};
     private static final float[] VARIANCE = {0.1f, 0.2f};
-    private static final float MEAN_R = 123.0f;
-    private static final float MEAN_G = 117.0f;
-    private static final float MEAN_B = 104.0f;
     private final List<float[]> anchors = new ArrayList<>();
 
     public FaceDetector(Logger logger, byte[] modelData) {
-        super(logger, new Model(modelData, MODEL_WIDTH, MODEL_HEIGHT, 0.0f, 1.0f));
+        super(logger, new ModelConfig(modelData, MODEL_WIDTH, MODEL_HEIGHT, MEAN_R, MEAN_G, MEAN_B));
         for (int i = 0; i < STEPS.length; i++) {
             for (int j = 0; j < (int) Math.ceil((float) MODEL_HEIGHT / STEPS[i]); j++) {
                 for (int k = 0; k < (int) Math.ceil((float) MODEL_WIDTH / STEPS[i]); k++) {
@@ -68,23 +68,6 @@ public class FaceDetector extends OnnxDeployer<List<FaceDetector.Result>> {
         } catch (OrtException e) {
             return new ArrayList<>();
         }
-    }
-
-    // RetinaFace的归一化
-    @Override
-    protected float[] normalize(byte[] rgbData) {
-        int size = MODEL_WIDTH * MODEL_HEIGHT;
-        float[] inputData = new float[size * 3];
-        for (int i = 0; i < size; i++) {
-            int pixelIndex = i * 3;
-            float r = rgbData[pixelIndex] & 0xFF;
-            float g = rgbData[pixelIndex + 1] & 0xFF;
-            float b = rgbData[pixelIndex + 2] & 0xFF;
-            inputData[i] = b - MEAN_B;
-            inputData[i + size] = g - MEAN_G;
-            inputData[i + 2 * size] = r - MEAN_R;
-        }
-        return inputData;
     }
 
     // 后处理
