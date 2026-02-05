@@ -10,6 +10,7 @@ import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import ai.onnxruntime.OnnxTensor;
+import ai.onnxruntime.OrtException;
 import ai.onnxruntime.OrtSession;
 import ai.onnxruntime.TensorInfo;
 
@@ -42,36 +43,34 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
     // 运行
     public List<Result> run(byte[] rgbData) {
         long startTime = System.currentTimeMillis();
-        List<Result> results = super.inference(rgbData);
-        if (!results.isEmpty()) {
-            logger.debug(TAG, String.format("run detection in %d ms, %d objects", System.currentTimeMillis() - startTime, results.size()));
+        try {
+            List<Result> results = super.inference(rgbData);
+            if (!results.isEmpty()) {
+                logger.debug(TAG, String.format("检测到%d个目标, 用时%dms", System.currentTimeMillis() - startTime, results.size()));
+            }
+            return results;
+        } catch (OrtException e) {
+            return new ArrayList<>();
         }
-        return results;
     }
 
     // 后处理
     @Override
-    protected List<Result> postprocess(OrtSession.Result sessionResult) {
-        // 处理输出张量
-        long[] outputShape;
-        FloatBuffer buffer;
+    protected List<Result> postprocess(OrtSession.Result sessionResult) throws OrtException {
         try (OnnxTensor tensor = (OnnxTensor) sessionResult.get(0)) {
             TensorInfo tensorInfo = (TensorInfo) super.session.getOutputInfo().values().iterator().next().getInfo();
-            buffer = tensor.getFloatBuffer();
-            outputShape = tensorInfo.getShape();
-        } catch (Exception e) {
-            logger.error(TAG, "update output tensor failed: " + e.getMessage());
-            return null;
+            FloatBuffer buffer = tensor.getFloatBuffer();
+            long[] outputShape = tensorInfo.getShape();
+            float[] outputArray = new float[buffer.remaining()];
+            buffer.get(outputArray);
+            int featuresPerDetection = (int) outputShape[2];
+            int totalDetections = (int) outputShape[0] * (int) outputShape[1];
+            float[][] outputs = new float[totalDetections][featuresPerDetection];
+            for (int i = 0; i < totalDetections; i++) {
+                System.arraycopy(outputArray, i * featuresPerDetection, outputs[i], 0, featuresPerDetection);
+            }
+            return decodeResult(outputs);
         }
-        float[] outputArray = new float[buffer.remaining()];
-        buffer.get(outputArray);
-        int featuresPerDetection = (int) outputShape[2];
-        int totalDetections = (int) outputShape[0] * (int) outputShape[1];
-        float[][] outputs = new float[totalDetections][featuresPerDetection];
-        for (int i = 0; i < totalDetections; i++) {
-            System.arraycopy(outputArray, i * featuresPerDetection, outputs[i], 0, featuresPerDetection);
-        }
-        return decodeResult(outputs);
     }
 
     // 解码检测结果

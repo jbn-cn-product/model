@@ -25,33 +25,33 @@ public class FaceRecognizer extends OnnxDeployer<FaceRecognizer.Result> {
 
     // 运行
     public float[] run(byte[] rgbData) {
-        Result result = super.inference(rgbData);
-        return result.features;
+        try {
+            Result result = super.inference(rgbData);
+            return result.features;
+        } catch (OrtException e) {
+            return null;
+        }
     }
 
     // 后处理
     @Override
     protected Result postprocess(OrtSession.Result sessionResult) {
-        Result result = new Result();
-        FloatBuffer buffer;
         try (OnnxTensor tensor = (OnnxTensor) sessionResult.get(0)) {
-            buffer = tensor.getFloatBuffer();
-        } catch (Exception e) {
-            logger.error(TAG, "update output tensor failed: " + e.getMessage());
-            return null;
+            FloatBuffer buffer = tensor.getFloatBuffer();
+            float[] outputs = new float[buffer.remaining()];
+            buffer.get(outputs);
+            float norm = 0.0f;
+            for (float value : outputs) {
+                norm += value * value;
+            }
+            norm = (float) Math.sqrt(norm + 1e-8f); // 添加小值防止除零
+            Result result = new Result();
+            result.features = new float[outputs.length];
+            for (int i = 0; i < outputs.length; i++) {
+                result.features[i] = outputs[i] / norm;
+            }
+            return result;
         }
-        float[] outputs = new float[buffer.remaining()];
-        buffer.get(outputs);
-        float norm = 0.0f;
-        for (float value : outputs) {
-            norm += value * value;
-        }
-        norm = (float) Math.sqrt(norm + 1e-8f); // 添加小值防止除零
-        result.features = new float[outputs.length];
-        for (int i = 0; i < outputs.length; i++) {
-            result.features[i] = outputs[i] / norm;
-        }
-        return result;
     }
 
     // 计算两个特征向量的余弦相似度

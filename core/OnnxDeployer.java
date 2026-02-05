@@ -54,7 +54,7 @@ public abstract class OnnxDeployer<ResultType> implements AutoCloseable {
     protected Logger logger;
 
     // 需要实现的方法
-    protected abstract ResultType postprocess(OrtSession.Result sessionResult);
+    protected abstract ResultType postprocess(OrtSession.Result sessionResult) throws OrtException;
 
     protected OnnxDeployer(Logger logger, Model model) {
         this.logger = logger;
@@ -71,7 +71,7 @@ public abstract class OnnxDeployer<ResultType> implements AutoCloseable {
         try {
             session = env.createSession(model.data, sessionOptions);
         } catch (OrtException e) {
-            logger.error(TAG, "Failed to initialize ONNX Runtime: " + e);
+            logger.error(TAG, "初始化onnx runtime环境失败: " + e);
             throw new RuntimeException();
         }
     }
@@ -90,7 +90,7 @@ public abstract class OnnxDeployer<ResultType> implements AutoCloseable {
             try {
                 session.close();
             } catch (OrtException e) {
-                logger.error(TAG, "Failed to close ONNX session" + e);
+                logger.error(TAG, "关闭onnx session时错误" + e);
             }
             env.close();
         }
@@ -112,25 +112,17 @@ public abstract class OnnxDeployer<ResultType> implements AutoCloseable {
         return inputData;
     }
 
-    // 运行模型
-    private OrtSession.Result runSession() throws OrtException {
-        try (OnnxTensor inputTensor = OnnxTensor.createTensor(env, inputByteBuffer, inputShape, OnnxJavaType.FLOAT)) {
-            return session.run(Collections.singletonMap(session.getInputInfo().keySet().iterator().next(), inputTensor));
-        }
-    }
-
-    // 运行
-    protected ResultType inference(byte[] rgbData) {
+    // 模型推理的全过程
+    protected ResultType inference(byte[] rgbData) throws OrtException {
         synchronized (lock) {
             float[] inputData = normalize(rgbData);
             // 更新输入缓冲区数据
             inputByteBuffer.rewind();
             inputFloatBuffer.rewind();
             inputFloatBuffer.put(inputData);
-            try (OrtSession.Result result = runSession()) {
+            try (OnnxTensor inputTensor = OnnxTensor.createTensor(env, inputByteBuffer, inputShape, OnnxJavaType.FLOAT)) {
+                OrtSession.Result result = session.run(Collections.singletonMap(session.getInputInfo().keySet().iterator().next(), inputTensor));
                 return postprocess(result);
-            } catch (OrtException e) {
-                throw new RuntimeException(e);
             }
         }
     }

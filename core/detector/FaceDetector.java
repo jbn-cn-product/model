@@ -8,6 +8,7 @@ import com.example.model.utils.DataHelper;
 import java.util.ArrayList;
 import java.util.List;
 import ai.onnxruntime.OnnxTensor;
+import ai.onnxruntime.OrtException;
 import ai.onnxruntime.OrtSession;
 
 public class FaceDetector extends OnnxDeployer<List<FaceDetector.Result>> {
@@ -58,11 +59,15 @@ public class FaceDetector extends OnnxDeployer<List<FaceDetector.Result>> {
     // 运行
     public List<Result> run(byte[] rgbData) {
         long startTime = System.currentTimeMillis();
-        List<Result> results = super.inference(rgbData);
-        if (!results.isEmpty()) {
-            logger.debug(TAG, String.format("检测到%d张人脸, 用时%dms", results.size(), System.currentTimeMillis() - startTime));
+        try {
+            List<Result> results = super.inference(rgbData);
+            if (!results.isEmpty()) {
+                logger.debug(TAG, String.format("检测到%d张人脸, 用时%dms", results.size(), System.currentTimeMillis() - startTime));
+            }
+            return results;
+        } catch (OrtException e) {
+            return new ArrayList<>();
         }
-        return results;
     }
 
     // RetinaFace的归一化
@@ -95,9 +100,6 @@ public class FaceDetector extends OnnxDeployer<List<FaceDetector.Result>> {
             float[] landmarksData = new float[landmarksTensor.getFloatBuffer().remaining()];
             landmarksTensor.getFloatBuffer().get(landmarksData);
             return decodeResult(boxData, confidenceData, landmarksData);
-        } catch (Exception e) {
-            logger.error(TAG, "update output tensor failed: " + e.getMessage());
-            return null;
         }
     }
 

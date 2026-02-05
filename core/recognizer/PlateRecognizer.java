@@ -30,24 +30,24 @@ public class PlateRecognizer extends OnnxDeployer<PlateRecognizer.Result> {
     // 运行
     public String run(byte[] rgbData) {
         long startTime = System.currentTimeMillis();
-        Result result = super.inference(rgbData);
-        String number = result.number;
-        logger.debug(TAG, String.format("车牌号识别结果: %s, 用时%dms", number, System.currentTimeMillis() - startTime));
-        return number;
+        try {
+            Result result = super.inference(rgbData);
+            logger.debug(TAG, String.format("车牌号识别结果: %s, 用时%dms", result.number, System.currentTimeMillis() - startTime));
+            return result.number;
+        } catch (OrtException e) {
+            return null;
+        }
     }
 
     // 后处理
     @Override
-    protected Result postprocess(OrtSession.Result sessionResult) {
-        Result result = new Result();
+    protected Result postprocess(OrtSession.Result sessionResult) throws OrtException {
         try (OnnxTensor plateTensor = (OnnxTensor) sessionResult.get(0);
              OnnxTensor colorTensor = (OnnxTensor) sessionResult.get(1)) {
+            Result result = new Result();
             result.number = decodePlate((float[][][]) plateTensor.getValue());
             result.color = decodeColor(((float[][]) colorTensor.getValue())[0]);
             return result;
-        } catch (Exception e) {
-            logger.error(TAG, "update output tensor failed: " + e.getMessage());
-            return null;
         }
     }
 
