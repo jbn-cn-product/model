@@ -9,6 +9,7 @@ import android.graphics.RectF;
 import com.example.model.structure.Common.Box;
 import com.example.model.structure.Face;
 import com.example.model.structure.Plate;
+import java.io.ByteArrayOutputStream;
 import java.util.Objects;
 
 public class ImageProcesser {
@@ -32,6 +33,13 @@ public class ImageProcesser {
         canvas.drawColor(Color.rgb(114, 114, 114)); // 填充为灰色，模型推理的标准做法
         canvas.drawBitmap(srcBitmap, matrix, null);
         return targetBitmap;
+    }
+
+    // Bitmap转字节流
+    public static byte[] convertBitmapToByteArray(Bitmap bitmap) {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+        return stream.toByteArray();
     }
 
     // Bitmap转RGB

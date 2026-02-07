@@ -1,6 +1,7 @@
 package com.example.model.utils;
 
 import com.example.model.structure.Common.Box;
+import com.example.model.structure.Common.Point;
 import com.example.model.structure.Face;
 import com.example.model.structure.Plate;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -239,6 +240,30 @@ public class DataHelper {
             vertexes.lb.x = (vertexes.lb.x - offsetX) / scale;
             vertexes.lb.y = (vertexes.lb.y - offsetY) / scale;
         }
+    }
+
+    // 计算坐标在旋转图像后的新值
+    public static void rotatePoint(Point point, float degrees, float srcWidth, float srcHeight) {
+        if (degrees == 0) {
+            return;
+        }
+        double radians = Math.toRadians(degrees);
+        double sin = Math.sin(radians);
+        double cos = Math.cos(radians);
+        double x0 = 0;
+        double y0 = 0;
+        double x1 = srcWidth * cos;
+        double y1 = -srcWidth * sin;
+        double x2 = srcHeight * sin;
+        double y2 = srcHeight * cos;
+        double x3 = srcWidth * cos + srcHeight * sin;
+        double y3 = -srcWidth * sin + srcHeight * cos;
+        double minX = Math.min(Math.min(Math.min(x0, x1), x2), x3);
+        double minY = Math.min(Math.min(Math.min(y0, y1), y2), y3);
+        float rawRotatedX = (float) (point.x * cos + point.y * sin);
+        float rawRotatedY = (float) (-point.x * sin + point.y * cos);
+        point.x = (float) (rawRotatedX - minX);
+        point.y = (float) (rawRotatedY - minY);
     }
 
 }
