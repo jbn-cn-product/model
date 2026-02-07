@@ -47,8 +47,8 @@ public class DataHelper {
         return area / union;
     }
 
-    // 计算姿态
-    public static Face.Angles calculateAngles(Face.Landmarks landmarks) {
+    // 计算人脸姿态
+    public static Face.Angles calculateFaceAngles(Face.Landmarks landmarks) {
         Face.Angles angles = new Face.Angles(0.0f, 0.0f, 0.0f);
         float eyeCenterX = (landmarks.leftEye.x + landmarks.rightEye.x) / 2.0f;
         float eyeDistance = Math.abs(landmarks.rightEye.x - landmarks.leftEye.x);
@@ -69,6 +69,18 @@ public class DataHelper {
             angles.roll = (float) Math.toDegrees(Math.atan(eyeDy / eyeDx));
         }
         return angles;
+    }
+
+    // 计算车牌角度
+    public static float calculatePlateAngle(Plate.Vertexes vertexes) {
+        float topCenterX = (vertexes.lt.x + vertexes.rt.x) / 2.0f;
+        float topCenterY = (vertexes.lt.y + vertexes.rt.y) / 2.0f;
+        float bottomCenterX = (vertexes.lb.x + vertexes.rb.x) / 2.0f;
+        float bottomCenterY = (vertexes.lb.y + vertexes.rb.y) / 2.0f;
+        float dy = bottomCenterY - topCenterY;
+        float dx = bottomCenterX - topCenterX;
+        double angleRad = Math.atan2(dx, dy);
+        return (float) Math.toDegrees(angleRad);
     }
 
     // 校正人脸关键点布局

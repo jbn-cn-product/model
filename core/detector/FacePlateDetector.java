@@ -109,7 +109,7 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
                 result.plateVertexes.lb = vertexes.get(0).y >= vertexes.get(1).y ? vertexes.get(0) : vertexes.get(1);
             } else if (result.classId == 1) {
                 result.faceLandmarks = new Face.Landmarks(pointList.get(0), pointList.get(1), pointList.get(2), pointList.get(3), pointList.get(4));
-                result.faceAngles = DataHelper.calculateAngles(result.faceLandmarks);
+                result.faceAngles = DataHelper.calculateFaceAngles(result.faceLandmarks);
             }
             results.add(result);
         }
