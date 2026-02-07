@@ -8,6 +8,7 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import com.example.model.structure.Common.Box;
 import com.example.model.structure.Face;
+import com.example.model.structure.Plate;
 import java.util.Objects;
 
 public class ImageProcesser {
@@ -106,7 +107,7 @@ public class ImageProcesser {
             pointPaint.setStrokeWidth(5f);
             return drawBitmap;
         }
-        public static void drawDetection(Box box, float confidence, Face.Landmarks landmarks) {
+        public static void drawDetection(Box box, float confidence, Face.Landmarks landmarks, Plate.Vertexes vertexes) {
             RectF boxRectF = new RectF(box.point.x, box.point.y, box.point.x + box.width, box.point.y + box.height);
             canvas.drawRect(boxRectF, boxPaint);
             String label = String.format("%.2f", confidence);
@@ -123,6 +124,12 @@ public class ImageProcesser {
                 canvas.drawPoint(landmarks.nose.x, landmarks.nose.y, pointPaint);
                 canvas.drawPoint(landmarks.leftMouth.x, landmarks.leftMouth.y, pointPaint);
                 canvas.drawPoint(landmarks.rightMouth.x, landmarks.rightMouth.y, pointPaint);
+            }
+            if (vertexes != null) {
+                canvas.drawPoint(vertexes.lt.x, vertexes.lt.y, pointPaint);
+                canvas.drawPoint(vertexes.rt.x, vertexes.rt.y, pointPaint);
+                canvas.drawPoint(vertexes.rb.x, vertexes.rb.y, pointPaint);
+                canvas.drawPoint(vertexes.lb.x, vertexes.lb.y, pointPaint);
             }
         }
     }

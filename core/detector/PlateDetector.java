@@ -3,6 +3,7 @@ package com.example.model.core.detector;
 import com.example.model.core.OnnxDeployer;
 import com.example.model.structure.Common.Box;
 import com.example.model.structure.Common.Point;
+import com.example.model.structure.Plate;
 import com.example.model.utils.DataHelper;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +16,7 @@ public class PlateDetector extends OnnxDeployer<List<PlateDetector.Result>> {
     public static class Result {
         public Box box;
         public float confidence;
+        public Plate.Vertexes plateVertexes;
     }
 
     private static final String TAG = "MyLogcat-PlateDetector";
@@ -83,6 +85,11 @@ public class PlateDetector extends OnnxDeployer<List<PlateDetector.Result>> {
             Result result = new Result();
             result.confidence = maxScore;
             result.box = new Box(new Point(cx - w / 2, cy - h / 2), w, h);
+            result.plateVertexes = new Plate.Vertexes();
+            result.plateVertexes.lt = new Point(data[i + 5], data[i + 6]);
+            result.plateVertexes.rt = new Point(data[i + 7], data[i + 8]);
+            result.plateVertexes.rb = new Point(data[i + 9], data[i + 10]);
+            result.plateVertexes.lb = new Point(data[i + 11], data[i + 12]);
             results.add(result);
         }
         results.sort((a, b) -> Float.compare(b.confidence, a.confidence));

@@ -2,6 +2,7 @@ package com.example.model.utils;
 
 import com.example.model.structure.Common.Box;
 import com.example.model.structure.Face;
+import com.example.model.structure.Plate;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
 import java.util.ArrayList;
@@ -196,7 +197,7 @@ public class DataHelper {
     }
 
     // 将模型输出坐标还原到原图尺寸上
-    public static void restoreResultCoordinates(int imageWidth, int imageHeight, int modelWidth, int modelHeight, Box box, Face.Landmarks landmarks) {
+    public static void restoreResultCoordinates(int imageWidth, int imageHeight, int modelWidth, int modelHeight, Box box, Face.Landmarks landmarks, Plate.Vertexes vertexes) {
         float scale = Math.min((float) modelWidth / imageWidth, (float) modelHeight / imageHeight);
         float offsetX = (modelWidth - imageWidth * scale) / 2.0f;
         float offsetY = (modelHeight - imageHeight * scale) / 2.0f;
@@ -215,6 +216,16 @@ public class DataHelper {
             landmarks.leftMouth.y = (landmarks.leftMouth.y - offsetY) / scale;
             landmarks.rightMouth.x = (landmarks.rightMouth.x - offsetX) / scale;
             landmarks.rightMouth.y = (landmarks.rightMouth.y - offsetY) / scale;
+        }
+        if (vertexes != null) {
+            vertexes.lt.x = (vertexes.lt.x - offsetX) / scale;
+            vertexes.lt.y = (vertexes.lt.y - offsetY) / scale;
+            vertexes.rt.x = (vertexes.rt.x - offsetX) / scale;
+            vertexes.rt.y = (vertexes.rt.y - offsetY) / scale;
+            vertexes.rb.x = (vertexes.rb.x - offsetX) / scale;
+            vertexes.rb.y = (vertexes.rb.y - offsetY) / scale;
+            vertexes.lb.x = (vertexes.lb.x - offsetX) / scale;
+            vertexes.lb.y = (vertexes.lb.y - offsetY) / scale;
         }
     }
 
