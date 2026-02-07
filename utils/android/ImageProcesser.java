@@ -64,12 +64,12 @@ public class ImageProcesser {
     }
 
     // 旋转图像
-    public static Bitmap rotateBitmap(Bitmap source, int angle) {
-        if (angle == 0) {
+    public static Bitmap rotateBitmap(Bitmap source, float degrees) {
+        if (degrees == 0) {
             return source.copy(Objects.requireNonNull(source.getConfig()), true);
         }
         Matrix matrix = new Matrix();
-        matrix.postRotate(angle);
+        matrix.postRotate(degrees);
         return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
     }
 

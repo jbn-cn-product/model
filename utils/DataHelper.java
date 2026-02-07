@@ -70,7 +70,7 @@ public class DataHelper {
         return angles;
     }
 
-    // 根据关键点校正人脸
+    // 校正人脸关键点布局
     public static byte[] rectifyFace(byte[] rgbData, int width, int height, List<float[]> landmarks) {
         final double[][] refPoints = {
                 {30.29459953f + 8.0f, 51.69630051f}, // 左眼
