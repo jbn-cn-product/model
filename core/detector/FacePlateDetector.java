@@ -20,7 +20,6 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
         public Box box;                         // 检测框
         public float confidence;                // 置信度
         public int classId;                     // 类别 0-车牌 1-人脸
-        public Face.Angles faceAngles;          // 人脸姿态
         public Face.Landmarks faceLandmarks;    // 人脸关键点
         public Plate.Vertexes plateVertexes;    // 车牌顶点
     }
@@ -98,18 +97,17 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
                 pointList.add(new Point(output[i], output[i + 1]));
             }
             if (result.classId == 0) {
-                result.plateVertexes = new Plate.Vertexes();
                 List<Point> vertexes = new ArrayList<>(pointList);
                 vertexes.remove(2); // 第3个关键点在车牌中无意义
                 // 排序后判断坐标方位
                 vertexes.sort((a, b) -> Float.compare(a.x, b.x));
-                result.plateVertexes.lt = vertexes.get(0).y < vertexes.get(1).y ? vertexes.get(0) : vertexes.get(1);
-                result.plateVertexes.rt = vertexes.get(2).y < vertexes.get(3).y ? vertexes.get(2) : vertexes.get(3);
-                result.plateVertexes.rb = vertexes.get(2).y >= vertexes.get(3).y ? vertexes.get(2) : vertexes.get(3);
-                result.plateVertexes.lb = vertexes.get(0).y >= vertexes.get(1).y ? vertexes.get(0) : vertexes.get(1);
+                Point lt = vertexes.get(0).y < vertexes.get(1).y ? vertexes.get(0) : vertexes.get(1);
+                Point rt = vertexes.get(2).y < vertexes.get(3).y ? vertexes.get(2) : vertexes.get(3);
+                Point rb = vertexes.get(2).y >= vertexes.get(3).y ? vertexes.get(2) : vertexes.get(3);
+                Point lb = vertexes.get(0).y >= vertexes.get(1).y ? vertexes.get(0) : vertexes.get(1);
+                result.plateVertexes = new Plate.Vertexes(lt, rt, rb, lb);
             } else if (result.classId == 1) {
                 result.faceLandmarks = new Face.Landmarks(pointList.get(0), pointList.get(1), pointList.get(2), pointList.get(3), pointList.get(4));
-                result.faceAngles = DataHelper.calculateFaceAngles(result.faceLandmarks);
             }
             results.add(result);
         }

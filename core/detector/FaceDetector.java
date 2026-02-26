@@ -17,7 +17,6 @@ public class FaceDetector extends OnnxDeployer<List<FaceDetector.Result>> {
         public Box box;
         public float confidence;
         public Face.Landmarks faceLandmarks;
-        public Face.Angles faceAngles;
     }
 
     private static final String TAG = "MyLogcat-FaceDetector";
@@ -113,7 +112,6 @@ public class FaceDetector extends OnnxDeployer<List<FaceDetector.Result>> {
             result.confidence = faceScore;
             result.box = new Box(new Point((cx - w / 2) * MODEL_WIDTH, (cy - h / 2) * MODEL_HEIGHT), w * MODEL_WIDTH, h * MODEL_HEIGHT);
             result.faceLandmarks = new Face.Landmarks(points[0], points[1], points[2], points[3], points[4]);
-            result.faceAngles = DataHelper.calculateFaceAngles(result.faceLandmarks);
             results.add(result);
         }
         results.sort((a, b) -> Float.compare(b.confidence, a.confidence));

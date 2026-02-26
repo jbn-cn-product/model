@@ -2,8 +2,6 @@ package com.example.model.utils;
 
 import com.example.model.structure.Common.Box;
 import com.example.model.structure.Common.Point;
-import com.example.model.structure.Face;
-import com.example.model.structure.Plate;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
 import java.util.ArrayList;
@@ -46,42 +44,6 @@ public class DataHelper {
             return 0.0f;
         }
         return area / union;
-    }
-
-    // 计算人脸姿态
-    public static Face.Angles calculateFaceAngles(Face.Landmarks landmarks) {
-        Face.Angles angles = new Face.Angles(0.0f, 0.0f, 0.0f);
-        float eyeCenterX = (landmarks.leftEye.x + landmarks.rightEye.x) / 2.0f;
-        float eyeDistance = Math.abs(landmarks.rightEye.x - landmarks.leftEye.x);
-        float noseOffset = landmarks.nose.x - eyeCenterX;
-        if (eyeDistance > 0.0f) {
-            angles.yaw = Math.max(-1.0f, Math.min(1.0f, noseOffset / eyeDistance)) * 30.0f;
-        }
-        float eyeCenterY = (landmarks.leftEye.y + landmarks.rightEye.y) / 2.0f;
-        float mouthCenterY = (landmarks.leftMouth.y + landmarks.rightMouth.y) / 2.0f;
-        float noseDeviation = landmarks.nose.y - ((eyeCenterY + mouthCenterY) / 2.0f);
-        float faceHeight = Math.abs(mouthCenterY - eyeCenterY);
-        if (faceHeight > 0.0f) {
-            angles.pitch = Math.max(-1.0f, Math.min(1.0f, noseDeviation / faceHeight)) * 20.0f;
-        }
-        float eyeDx = landmarks.rightEye.x - landmarks.leftEye.x;
-        float eyeDy = landmarks.rightEye.y - landmarks.leftEye.y;
-        if (Math.abs(eyeDx) > 0.0f) {
-            angles.roll = (float) Math.toDegrees(Math.atan(eyeDy / eyeDx));
-        }
-        return angles;
-    }
-
-    // 计算车牌角度
-    public static float calculatePlateAngle(Plate.Vertexes vertexes) {
-        float topCenterX = (vertexes.lt.x + vertexes.rt.x) / 2.0f;
-        float topCenterY = (vertexes.lt.y + vertexes.rt.y) / 2.0f;
-        float bottomCenterX = (vertexes.lb.x + vertexes.rb.x) / 2.0f;
-        float bottomCenterY = (vertexes.lb.y + vertexes.rb.y) / 2.0f;
-        float dy = bottomCenterY - topCenterY;
-        float dx = bottomCenterX - topCenterX;
-        double angleRad = Math.atan2(dx, dy);
-        return (float) Math.toDegrees(angleRad);
     }
 
     // 校正人脸关键点布局
@@ -199,14 +161,6 @@ public class DataHelper {
         }
         double mean = sum / validPixelCount;
         return (sumSq / validPixelCount) - (mean * mean);
-    }
-
-    // 判断裁切框是否超出范围
-    public static boolean isBoxOutOfImage(Box box, int originalWidth, int originalHeight) {
-        return (box.point.x < 0 || box.point.y < 0 ||
-                box.point.x + box.width > originalWidth ||
-                box.point.y + box.height > originalHeight
-        );
     }
 
     // 计算坐标在旋转图像后的新值
