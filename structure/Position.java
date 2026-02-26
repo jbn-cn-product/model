@@ -14,6 +14,9 @@ public class Position {
             x = (x - restore.offsetX) / restore.scale;
             y = (y - restore.offsetY) / restore.scale;
         }
+        public boolean isOutOfImage(int originalWidth, int originalHeight) {
+            return (x < 0 || y < 0 || y > originalWidth || y > originalHeight);
+        }
     }
 
     // 检测框
@@ -32,11 +35,7 @@ public class Position {
             height /= restore.scale;
         }
         public boolean isOutOfImage(int originalWidth, int originalHeight) {
-            return (point.x < 0 ||
-                    point.y < 0 ||
-                    point.x + width > originalWidth ||
-                    point.y + height > originalHeight
-            );
+            return (point.x < 0 || point.y < 0 || point.x + width > originalWidth || point.y + height > originalHeight);
         }
     }
 

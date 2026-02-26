@@ -10,7 +10,12 @@ import com.example.model.structure.Position.Box;
 import com.example.model.structure.Face;
 import com.example.model.structure.Plate;
 import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import org.opencv.android.Utils;
+import org.opencv.core.*;
+import org.opencv.imgproc.Imgproc;
 
 public class ImageProcesser {
 
@@ -87,6 +92,45 @@ public class ImageProcesser {
         if (bitmap != null && !bitmap.isRecycled()) {
             bitmap.recycle();
         }
+    }
+
+    // 车牌四点变换
+    public static Bitmap rectifyPlate(Bitmap bitmap, Plate plate) {
+        Mat srcMat = new Mat();
+        Utils.bitmapToMat(bitmap, srcMat);
+        Imgproc.cvtColor(srcMat, srcMat, Imgproc.COLOR_RGBA2BGR);
+        List<Point> srcPoints = new ArrayList<>();
+        srcPoints.add(new Point(plate.lt.x, plate.lt.y));
+        srcPoints.add(new Point(plate.rt.x, plate.rt.y));
+        srcPoints.add(new Point(plate.rb.x, plate.rb.y));
+        srcPoints.add(new Point(plate.lb.x, plate.lb.y));
+        MatOfPoint2f srcMatPt = new MatOfPoint2f();
+        srcMatPt.fromList(srcPoints);
+        double widthTop = Math.sqrt(Math.pow(plate.rt.x - plate.lt.x, 2) + Math.pow(plate.rt.y - plate.lt.y, 2));
+        double widthBottom = Math.sqrt(Math.pow(plate.rb.x - plate.lb.x, 2) + Math.pow(plate.rb.y - plate.lb.y, 2));
+        int maxWidth = (int) Math.max(widthTop, widthBottom);
+        double heightLeft = Math.sqrt(Math.pow(plate.lb.x - plate.lt.x, 2) + Math.pow(plate.lb.y - plate.lt.y, 2));
+        double heightRight = Math.sqrt(Math.pow(plate.rb.x - plate.rt.x, 2) + Math.pow(plate.rb.y - plate.rt.y, 2));
+        int maxHeight = (int) Math.max(heightLeft, heightRight);
+        List<Point> dstPoints = new ArrayList<>();
+        dstPoints.add(new Point(0, 0));
+        dstPoints.add(new Point(maxWidth, 0));
+        dstPoints.add(new Point(maxWidth, maxHeight));
+        dstPoints.add(new Point(0, maxHeight));
+        MatOfPoint2f dstMatPt = new MatOfPoint2f();
+        dstMatPt.fromList(dstPoints);
+        Mat perspectiveMatrix = Imgproc.getPerspectiveTransform(srcMatPt, dstMatPt);
+        Mat dstMat = new Mat(maxHeight, maxWidth, CvType.CV_8UC3);
+        Imgproc.warpPerspective(srcMat, dstMat, perspectiveMatrix, dstMat.size(), Imgproc.INTER_CUBIC);
+        Imgproc.cvtColor(dstMat, dstMat, Imgproc.COLOR_BGR2RGBA);
+        Bitmap resultBitmap = Bitmap.createBitmap(maxWidth, maxHeight, Bitmap.Config.RGB_565);
+        Utils.matToBitmap(dstMat, resultBitmap);
+        srcMat.release();
+        dstMat.release();
+        perspectiveMatrix.release();
+        srcMatPt.release();
+        dstMatPt.release();
+        return resultBitmap;
     }
 
     // 用于绘制检测结果
