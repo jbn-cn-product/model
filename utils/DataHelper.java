@@ -2,7 +2,6 @@ package com.example.model.utils;
 
 import com.example.model.structure.Common.Box;
 import com.example.model.structure.Common.Point;
-import com.example.model.structure.Common.Restore;
 import com.example.model.structure.Face;
 import com.example.model.structure.Plate;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -208,17 +207,6 @@ public class DataHelper {
                 box.point.x + box.width > originalWidth ||
                 box.point.y + box.height > originalHeight
         );
-    }
-
-    // 将模型输出坐标还原到原图尺寸上
-    public static void restoreBox(Box box, Restore restore) {
-        restorePoint(box.point, restore);
-        box.width /= restore.scale;
-        box.height /= restore.scale;
-    }
-    public static void restorePoint(Point point, Restore restore) {
-        point.x = (point.x - restore.offsetX) / restore.scale;
-        point.y = (point.y - restore.offsetY) / restore.scale;
     }
 
     // 计算坐标在旋转图像后的新值

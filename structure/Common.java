@@ -10,17 +10,26 @@ public class Common {
             this.x = x;
             this.y = y;
         }
+        public void restore(Restore restore) {
+            x = (x - restore.offsetX) / restore.scale;
+            y = (y - restore.offsetY) / restore.scale;
+        }
     }
 
     // 检测框
     public static class Box {
-        public Point point; // 左上角原点
+        public Point point; // 左上角
         public float width;
         public float height;
         public Box(Point point, float width, float height) {
             this.point = point;
             this.width = width;
             this.height = height;
+        }
+        public void restore(Restore restore) {
+            point.restore(restore);
+            width /= restore.scale;
+            height /= restore.scale;
         }
     }
 
