@@ -6,7 +6,7 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.RectF;
-import com.example.model.structure.Common.Box;
+import com.example.model.structure.Position.Box;
 import com.example.model.structure.Face;
 import com.example.model.structure.Plate;
 import java.io.ByteArrayOutputStream;
@@ -115,7 +115,7 @@ public class ImageProcesser {
             pointPaint.setStrokeWidth(5f);
             return drawBitmap;
         }
-        public static void drawDetection(Box box, float confidence, Face.Landmarks landmarks, Plate.Vertexes vertexes) {
+        public static void drawDetection(Box box, float confidence, Face face, Plate plate) {
             RectF boxRectF = new RectF(box.point.x, box.point.y, box.point.x + box.width, box.point.y + box.height);
             canvas.drawRect(boxRectF, boxPaint);
             String label = String.format("%.2f", confidence);
@@ -126,18 +126,18 @@ public class ImageProcesser {
                     boxRectF.top
             ), textBgPaint);
             canvas.drawText(label, boxRectF.left + 5, boxRectF.top - 5, textPaint);
-            if (landmarks != null) {
-                canvas.drawPoint(landmarks.leftEye.x, landmarks.leftEye.y, pointPaint);
-                canvas.drawPoint(landmarks.rightEye.x, landmarks.rightEye.y, pointPaint);
-                canvas.drawPoint(landmarks.nose.x, landmarks.nose.y, pointPaint);
-                canvas.drawPoint(landmarks.leftMouth.x, landmarks.leftMouth.y, pointPaint);
-                canvas.drawPoint(landmarks.rightMouth.x, landmarks.rightMouth.y, pointPaint);
+            if (face != null) {
+                canvas.drawPoint(face.leftEye.x, face.leftEye.y, pointPaint);
+                canvas.drawPoint(face.rightEye.x, face.rightEye.y, pointPaint);
+                canvas.drawPoint(face.nose.x, face.nose.y, pointPaint);
+                canvas.drawPoint(face.leftMouth.x, face.leftMouth.y, pointPaint);
+                canvas.drawPoint(face.rightMouth.x, face.rightMouth.y, pointPaint);
             }
-            if (vertexes != null) {
-                canvas.drawPoint(vertexes.lt.x, vertexes.lt.y, pointPaint);
-                canvas.drawPoint(vertexes.rt.x, vertexes.rt.y, pointPaint);
-                canvas.drawPoint(vertexes.rb.x, vertexes.rb.y, pointPaint);
-                canvas.drawPoint(vertexes.lb.x, vertexes.lb.y, pointPaint);
+            if (plate != null) {
+                canvas.drawPoint(plate.lt.x, plate.lt.y, pointPaint);
+                canvas.drawPoint(plate.rt.x, plate.rt.y, pointPaint);
+                canvas.drawPoint(plate.rb.x, plate.rb.y, pointPaint);
+                canvas.drawPoint(plate.lb.x, plate.lb.y, pointPaint);
             }
         }
     }

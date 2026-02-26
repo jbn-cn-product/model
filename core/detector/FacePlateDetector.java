@@ -1,8 +1,8 @@
 package com.example.model.core.detector;
 
 import com.example.model.core.OnnxDeployer;
-import com.example.model.structure.Common.Box;
-import com.example.model.structure.Common.Point;
+import com.example.model.structure.Position.Box;
+import com.example.model.structure.Position.Point;
 import com.example.model.structure.Face;
 import com.example.model.structure.Plate;
 import com.example.model.utils.DataHelper;
@@ -17,11 +17,11 @@ import ai.onnxruntime.TensorInfo;
 public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Result>> {
 
     public static class Result {
-        public Box box;                         // 检测框
-        public float confidence;                // 置信度
-        public int classId;                     // 类别 0-车牌 1-人脸
-        public Face.Landmarks faceLandmarks;    // 人脸关键点
-        public Plate.Vertexes plateVertexes;    // 车牌顶点
+        public Box box;
+        public float confidence;
+        public int classId; // 类别 0-车牌 1-人脸
+        public Face face;
+        public Plate plate;
     }
 
     private static final String TAG = "MyLogcat-FacePlateDetector";
@@ -105,9 +105,9 @@ public class FacePlateDetector extends OnnxDeployer<List<FacePlateDetector.Resul
                 Point rt = vertexes.get(2).y < vertexes.get(3).y ? vertexes.get(2) : vertexes.get(3);
                 Point rb = vertexes.get(2).y >= vertexes.get(3).y ? vertexes.get(2) : vertexes.get(3);
                 Point lb = vertexes.get(0).y >= vertexes.get(1).y ? vertexes.get(0) : vertexes.get(1);
-                result.plateVertexes = new Plate.Vertexes(lt, rt, rb, lb);
+                result.plate = new Plate(lt, rt, rb, lb);
             } else if (result.classId == 1) {
-                result.faceLandmarks = new Face.Landmarks(pointList.get(0), pointList.get(1), pointList.get(2), pointList.get(3), pointList.get(4));
+                result.face = new Face(pointList.get(0), pointList.get(1), pointList.get(2), pointList.get(3), pointList.get(4));
             }
             results.add(result);
         }

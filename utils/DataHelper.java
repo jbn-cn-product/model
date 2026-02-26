@@ -1,7 +1,7 @@
 package com.example.model.utils;
 
-import com.example.model.structure.Common.Box;
-import com.example.model.structure.Common.Point;
+import com.example.model.structure.Position.Box;
+import com.example.model.structure.Position.Point;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
 import java.util.ArrayList;

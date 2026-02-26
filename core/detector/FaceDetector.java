@@ -1,8 +1,8 @@
 package com.example.model.core.detector;
 
 import com.example.model.core.OnnxDeployer;
-import com.example.model.structure.Common.Box;
-import com.example.model.structure.Common.Point;
+import com.example.model.structure.Position.Box;
+import com.example.model.structure.Position.Point;
 import com.example.model.structure.Face;
 import com.example.model.utils.DataHelper;
 import java.util.ArrayList;
@@ -16,7 +16,7 @@ public class FaceDetector extends OnnxDeployer<List<FaceDetector.Result>> {
     public static class Result {
         public Box box;
         public float confidence;
-        public Face.Landmarks faceLandmarks;
+        public Face face;
     }
 
     private static final String TAG = "MyLogcat-FaceDetector";
@@ -111,7 +111,7 @@ public class FaceDetector extends OnnxDeployer<List<FaceDetector.Result>> {
             Result result = new Result();
             result.confidence = faceScore;
             result.box = new Box(new Point((cx - w / 2) * MODEL_WIDTH, (cy - h / 2) * MODEL_HEIGHT), w * MODEL_WIDTH, h * MODEL_HEIGHT);
-            result.faceLandmarks = new Face.Landmarks(points[0], points[1], points[2], points[3], points[4]);
+            result.face = new Face(points[0], points[1], points[2], points[3], points[4]);
             results.add(result);
         }
         results.sort((a, b) -> Float.compare(b.confidence, a.confidence));
