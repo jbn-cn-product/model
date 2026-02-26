@@ -2,6 +2,7 @@ package com.example.model.utils;
 
 import com.example.model.structure.Common.Box;
 import com.example.model.structure.Common.Point;
+import com.example.model.structure.Common.Restore;
 import com.example.model.structure.Face;
 import com.example.model.structure.Plate;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -147,7 +148,7 @@ public class DataHelper {
         return resultData;
     }
 
-    // 计算人脸模糊度
+    // 计算模糊度
     public static double calculateBlur(byte[] rgbData, int width, int height) {
         final double weightR = 0.299;
         final double weightG = 0.587;
@@ -210,36 +211,14 @@ public class DataHelper {
     }
 
     // 将模型输出坐标还原到原图尺寸上
-    public static void restoreResultCoordinates(int imageWidth, int imageHeight, int modelWidth, int modelHeight, Box box, Face.Landmarks landmarks, Plate.Vertexes vertexes) {
-        float scale = Math.min((float) modelWidth / imageWidth, (float) modelHeight / imageHeight);
-        float offsetX = (modelWidth - imageWidth * scale) / 2.0f;
-        float offsetY = (modelHeight - imageHeight * scale) / 2.0f;
-        box.point.x = (box.point.x - offsetX) / scale;
-        box.point.y = (box.point.y - offsetY) / scale;
-        box.width = box.width / scale;
-        box.height = box.height / scale;
-        if (landmarks != null) {
-            landmarks.leftEye.x = (landmarks.leftEye.x - offsetX) / scale;
-            landmarks.leftEye.y = (landmarks.leftEye.y - offsetY) / scale;
-            landmarks.rightEye.x = (landmarks.rightEye.x - offsetX) / scale;
-            landmarks.rightEye.y = (landmarks.rightEye.y - offsetY) / scale;
-            landmarks.nose.x = (landmarks.nose.x - offsetX) / scale;
-            landmarks.nose.y = (landmarks.nose.y - offsetY) / scale;
-            landmarks.leftMouth.x = (landmarks.leftMouth.x - offsetX) / scale;
-            landmarks.leftMouth.y = (landmarks.leftMouth.y - offsetY) / scale;
-            landmarks.rightMouth.x = (landmarks.rightMouth.x - offsetX) / scale;
-            landmarks.rightMouth.y = (landmarks.rightMouth.y - offsetY) / scale;
-        }
-        if (vertexes != null) {
-            vertexes.lt.x = (vertexes.lt.x - offsetX) / scale;
-            vertexes.lt.y = (vertexes.lt.y - offsetY) / scale;
-            vertexes.rt.x = (vertexes.rt.x - offsetX) / scale;
-            vertexes.rt.y = (vertexes.rt.y - offsetY) / scale;
-            vertexes.rb.x = (vertexes.rb.x - offsetX) / scale;
-            vertexes.rb.y = (vertexes.rb.y - offsetY) / scale;
-            vertexes.lb.x = (vertexes.lb.x - offsetX) / scale;
-            vertexes.lb.y = (vertexes.lb.y - offsetY) / scale;
-        }
+    public static void restoreBox(Box box, Restore restore) {
+        restorePoint(box.point, restore);
+        box.width /= restore.scale;
+        box.height /= restore.scale;
+    }
+    public static void restorePoint(Point point, Restore restore) {
+        point.x = (point.x - restore.offsetX) / restore.scale;
+        point.y = (point.y - restore.offsetY) / restore.scale;
     }
 
     // 计算坐标在旋转图像后的新值
