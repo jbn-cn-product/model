@@ -1,37 +1,48 @@
-# Android ONNXRuntime 部署说明
+# Java ONNXRuntime 部署说明
 
 ## 一、代码结构
 
 ```text
 model
-├── core
-│   ├── base
-│   │   └── OnnxDeployer.java
-│   ├── FacePlateDetector.java
-│   ├── FaceRecognizer.java
-│   └── PlateRecognizer.java
 ├── api
-│   └── android
-│       └── Logger.java
+│   └── android
+│       └── Logger.java             日志接口
+├── core
+│   ├── detector
+│   │   ├── FaceDetector.java       人脸检测模型
+│   │   ├── PlateDetector.java      车牌检测模型
+│   │   └── FacePlateDetector.java  车+脸检测双任务模型
+│   ├── recognizer
+│   │   ├── FaceRecognizer.java     人脸识别模型
+│   │   └── PlateRecognizer.java    车牌识别模型
+│   └── OnnxDeployer.java           模型部署基类
+├── structure
+│   ├── Face.java                   人脸数据结构
+│   ├── Plate.java                  车牌数据结构
+│   └── Position.java               坐标数据结构
 └── utils
-    └── android
-        ├── ImageProcesser.java
-        └── ModelLoader.java
+    ├── android
+    │   ├── ImageProcesser.java     图像处理工具类
+    │   └── ModelLoader.java        模型加载工具类
+    └── DataHelper.java             数据处理工具类
+
 ```
 
 ## 二、模块设计思路
 
 - 模型定义了一个Logger接口，部署过程需要输出日志以供调试，不同运行环境下打印日志的方法也不同，例如纯java可以用System.out、Android用Log类，api/android为Android环境的默认实现
 
-- 由于编写本库的目的是实现脱离Android环境依赖进行onnx模型推理部署，因此规定了core里的代码不允许导入android包，但这样只能将模型的图像输入格式定义成byte[]，而非Android的Bitmap类，而图像需要先经过缩放、裁剪等操作处理成模型接受的状态，再转换为字节数组，另外模型文件也需要处理成byte[]，因此创建utils/android，提供了一套辅助方法，不同的Android项目可共享使用。若是在电脑上进行纯java部署，就需要调用方自行编写相关功能
+- 由于编写本库的目的是实现脱离Android环境依赖进行onnx模型推理部署，因此规定了core里的代码不允许导入android包，但这样只能将模型的图像输入格式定义成byte[]，而非Android的Bitmap类，而图像需要先经过缩放、裁剪等操作处理成模型接受的状态，再转换为字节数组，另外模型文件也需要处理成byte[]，因此创建utils/android，提供了一套辅助方法，不同的Android项目可共享使用。若是在电脑上进行纯java部署，就需要自行编写相关功能
 
-- 以下为本仓库三种不同模型要求的图像输入规格:
+- 以下为本仓库几种不同模型要求的图像输入规格:
 
-| 类名 | 模型文件 | 功能 | 分辨率 | 内容要求 |
-| --- | --- | :---: | :---: | --- |
-| FacePlateDetector | car_face_det.onnx | 车牌+人脸多目标检测 | 640x640 | 需要保持图像原始比例，以获取正常的关键点分布(可以在转换尺寸后填充黑色区域) |
-| FaceRecognizer | face_rec.onnx | 人脸识别 | 112x112 | 画面内容只能有人脸，不能出现周围环境，否则会导致特征向量匹配度很低 |
-| PlateRecognizer | car_rec.onnx | 车牌识别 | 168x48 | 同人脸识别，以牌照框为整张图片的边界，来提高车牌号识别准确度 |
+| 类名 | 模型文件 | 功能 | 分辨率 | 内容要求 | 备注 |
+| --- | --- | :---: | :---: | --- | --- |
+| FacePlateDetector | car_face_det.onnx | 车牌+人脸双任务检测 | 640x640 | 需要保持图像原始比例，以获取正常的关键点分布(可以在转换尺寸后填充黑色区域) | 性能和内存表现差，已弃用 |
+| FaceDetector | face_det.onnx | 人脸检测 | 640x640 | 需要保持图像原始比例，以获取正常的关键点分布(可以在转换尺寸后填充黑色区域) |  |
+| PlateDetector | car_det.onnx | 车牌检测 | 640x640 | 需要保持图像原始比例，以获取正常的关键点分布(可以在转换尺寸后填充黑色区域) |  |
+| FaceRecognizer | face_rec.onnx | 人脸识别 | 112x112 | 画面内容只能有人脸，不能出现周围环境，否则会导致特征向量匹配度很低 |  |
+| PlateRecognizer | car_rec.onnx | 车牌识别 | 168x48 | 同人脸识别，以牌照框为整张图片的边界，来提高车牌号识别准确度 |  |
 
 ## 三、使用步骤(以Android为例)
 
@@ -39,7 +50,7 @@ model
 
 ```sh
 cd project/app/src/main/java/com/example
-git submodule add git@github.com:jbn-cn-product/model-deployment-onnx.git model
+git submodule add git@github.com:jbn-cn-product/model.git model
 git submodule update --init
 ```
 
@@ -73,17 +84,9 @@ dependencies {
 
 目前用的包是适配android的，但API完全通用
 
-### 3.模型文件放置于assets目录
+### 3.模型文件放置于app/src/main/assets目录
 
-模型文件路径(Linux格式): smb://192.168.2.28/产研中心/算法/faceplate/model-onnx/
-
-```text
-app/src/main
-└── assets
-    ├── car_face_det.onnx
-    ├── car_rec.onnx
-    └── face_rec.onnx
-```
+模型文件路径(Linux格式): smb://192.168.2.28/产研中心/算法/faceplate/models/
 
 ### 4.部署
 
