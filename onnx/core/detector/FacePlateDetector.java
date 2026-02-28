@@ -1,11 +1,11 @@
-package com.example.model.core.detector;
+package com.example.model.onnx.core.detector;
 
-import com.example.model.core.OnnxDeployer;
-import com.example.model.structure.Position.Box;
-import com.example.model.structure.Position.Point;
-import com.example.model.structure.Face;
-import com.example.model.structure.Plate;
-import com.example.model.utils.DataHelper;
+import com.example.model.onnx.core.OnnxDeployer;
+import com.example.model.onnx.structure.Position.Box;
+import com.example.model.onnx.structure.Position.Point;
+import com.example.model.onnx.structure.Face;
+import com.example.model.onnx.structure.Plate;
+import com.example.model.onnx.utils.DataHelper;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;

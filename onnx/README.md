@@ -90,10 +90,10 @@ app/src/main
 以下是简单示例，详细使用过程可参考执法仪应用[Detector.java](https://github.com/jbn-cn-product/vision-bodycam/blob/bodycam2/app/src/main/java/com/example/bodycam2/Detector.java)
 
 ```java
-import com.example.model.api.android.Logger;
-import com.example.model.core.FaceRecognizer;
-import com.example.model.utils.android.ImageProcesser;
-import com.example.model.utils.android.ModelLoader;
+import com.example.model.onnx.api.android.Logger;
+import com.example.model.onnx.core.FaceRecognizer;
+import com.example.model.onnx.utils.android.ImageProcesser;
+import com.example.model.onnx.utils.android.ModelLoader;
 public class Recognizer implements AutoCloseable {
 
     // 人脸识别
