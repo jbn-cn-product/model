@@ -1,0 +1,15 @@
+[package]
+name = "rknn_rs"
+version = "0.0.0"
+edition = "2021"
+build = "build.rs"
+
+[dependencies]
+image = { version = "0.25.1" }
+
+[dev-dependencies]
+imageproc = { version = "0.25.0" }
+ab_glyph = { version = "0.2.21" }
+
+[build-dependencies]
+bindgen = { version = "0.69.4" }
