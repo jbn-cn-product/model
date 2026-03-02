@@ -1,4 +1,4 @@
-package com.example.model.onnx.utils.android;
+package com.example.model.utils.android;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -6,9 +6,9 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.RectF;
-import com.example.model.onnx.structure.Position.Box;
-import com.example.model.onnx.structure.Face;
-import com.example.model.onnx.structure.Plate;
+import com.example.model.structure.Position.Box;
+import com.example.model.structure.Face;
+import com.example.model.structure.Plate;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;

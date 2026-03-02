@@ -1,4 +1,4 @@
-package com.example.model.onnx.structure;
+package com.example.model.structure;
 
 public class Position {
 

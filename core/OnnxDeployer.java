@@ -1,4 +1,4 @@
-package com.example.model.onnx.core;
+package com.example.model.core;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

@@ -1,6 +1,6 @@
-package com.example.model.onnx.structure;
+package com.example.model.structure;
 
-import com.example.model.onnx.structure.Position.Point;
+import com.example.model.structure.Position.Point;
 
 public class Face {
 

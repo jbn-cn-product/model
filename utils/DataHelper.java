@@ -1,7 +1,7 @@
-package com.example.model.onnx.utils;
+package com.example.model.utils;
 
-import com.example.model.onnx.structure.Position.Box;
-import com.example.model.onnx.structure.Position.Point;
+import com.example.model.structure.Position.Box;
+import com.example.model.structure.Position.Point;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
 import java.util.ArrayList;
